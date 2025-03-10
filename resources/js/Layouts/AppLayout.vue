@@ -2,6 +2,7 @@
 import { ref } from "vue";
 import Menubar from "primevue/menubar";
 import NavBar from "@/Components/NavBar.vue";
+
 const appName = import.meta.env.VITE_APP_NAME || "Laravel";
 
 const items = ref([
@@ -31,31 +32,29 @@ const items = ref([
         to: route("settings"),
     },
 ]);
+
 </script>
 
 <template>
-    <div class="min-h-screen flex flex-col bg-gray-50">
+    <div class="min-h-screen">
         <!-- Top Navigation -->
-        <header class="bg-white shadow-sm">
-            <div class="mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex justify-between h-16">
-                    <!-- Logo and Brand -->
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0 flex items-center">
-                            <span class="text-xl font-bold text-indigo-600">{{
-                                appName
-                            }}</span>
-                        </div>
-                    </div>
-
-                    <!-- Navigation Menu -->
-                    <div class="flex items-center">
-                        <!-- <Menubar :model="items" class="border-none" /> -->
-                         <NavBar :items="items" />
-                    </div>
+        <div class="w-full bg-gray-50 border-b border-gray-200">
+            <div class="flex justify-between max-w-7xl mx-auto px-2 py-3">
+                <!-- Logo and Brand -->
+                <div class="flex items-center">
+                    <img
+                        src="../../../public/assets/logo.png"
+                        alt="Logo"
+                        class="h-8 mr-3 w-14 object-cover"
+                    />
+                </div>
+    
+                <!-- Navigation Menu -->
+                <div class="flex items-center">
+                    <NavBar :items="items" />
                 </div>
             </div>
-        </header>
+        </div>
 
         <!-- Main Content -->
         <main class="">

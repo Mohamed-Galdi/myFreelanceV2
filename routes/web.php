@@ -13,9 +13,12 @@ use Inertia\Inertia;
 
 
 // Login Routes...
-Route::get('/', [AuthenticatedSessionController::class, 'create'])
-    ->name('login');
-Route::post('/', [AuthenticatedSessionController::class, 'store']);
+
+Route::middleware('guest')->group(function () {
+    Route::get('/', [AuthenticatedSessionController::class, 'create'])
+        ->name('login');
+    Route::post('/', [AuthenticatedSessionController::class, 'store']);
+});
 
 
 
@@ -33,4 +36,8 @@ Route::middleware('auth')->group(function () {
 
     // Settings Routes
     Route::get('/settings', [SettingsController::class, 'index'])->name('settings');
+
+    // Logout Route
+    Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])
+            ->name('logout');
 });
