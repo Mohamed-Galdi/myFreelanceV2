@@ -26,7 +26,7 @@ const chartConfig = computed(() => {
             {
                 type: "line",
                 label: "Cumulative Revenue",
-                 backgroundColor: "rgba(250, 202, 162, 0.3)", // Soft peach
+                backgroundColor: "rgba(250, 202, 162, 0.3)", // Soft peach
                 borderColor: "rgb(230, 126, 34)", // Warm orange-brown
                 borderWidth: 2,
                 fill: true,
@@ -37,7 +37,7 @@ const chartConfig = computed(() => {
             {
                 type: "bar",
                 label: "Works",
-                 backgroundColor: "rgba(100, 181, 246, 0.8)", // Soft sky blue
+                backgroundColor: "rgba(100, 181, 246, 0.8)", // Soft sky blue
                 borderColor: "rgb(79, 129, 189)", // Muted deep blue
                 borderWidth: 1,
                 data: data.map((item) => item.workCount),
@@ -75,7 +75,7 @@ const chartOptions = {
                 },
             },
             grid: {
-                 color: "rgba(230, 230, 230, 0.4)",
+                color: "rgba(230, 230, 230, 0.4)",
             },
         },
         y1: {
@@ -129,7 +129,9 @@ const chartOptions = {
     <div
         class="card-soft mb-8 p-6 rounded-2xl bg-gradient-to-br from-white to-blue-50 shadow-lg border border-gray-200"
     >
-        <div class="flex justify-between items-center mb-6">
+        <div
+            class="flex md:flex-row flex-col md:gap-0 gap-2 justify-between items-center mb-6"
+        >
             <h2 class="text-xl font-bold text-gray-800">
                 Revenue & Work Overview
             </h2>
@@ -138,16 +140,19 @@ const chartOptions = {
                 :options="periodOptions"
                 optionLabel="label"
                 optionValue="value"
-                class="p-button-rounded p-button-sm"
+                class="p-button-rounded p-button-sm overflow-x-auto"
             />
         </div>
-        <div class="h-96">
-            <Chart
-                type="bar"
-                :data="chartConfig"
-                :options="chartOptions"
-                class="revenue-chart h-full"
-            />
+        <!-- Scroll on mobile, full width on desktop -->
+        <div class="overflow-x-auto md:overflow-hidden w-full">
+            <div class="min-w-[600px] md:w-full h-96">
+                <Chart
+                    type="bar"
+                    :data="chartConfig"
+                    :options="chartOptions"
+                    class="revenue-chart h-full"
+                />
+            </div>
         </div>
     </div>
 </template>
