@@ -24,6 +24,7 @@ const groupedDeadlines = computed(() => {
     allDeadlineWorks.value.forEach((work) => {
         const date = new Date(work.end_date);
         const month = date.toLocaleString("default", { month: "long" });
+        const year = date.getFullYear();
         const day = date.getDate();
         if (!grouped[month]) grouped[month] = {};
         if (!grouped[month][day]) grouped[month][day] = [];
@@ -66,7 +67,7 @@ const groupedDeadlines = computed(() => {
         <!-- Deadlines List -->
         <div v-else>
             <div
-                v-for="(monthData, month) in groupedDeadlines"
+                v-for="(monthData, month, year) in groupedDeadlines"
                 :key="month"
                 class="mb-8"
             >

@@ -21,7 +21,7 @@ const props = defineProps({
 </script>
 
 <template>
-    <div class="max-w-7xl mx-auto p-4">
+    <div class="max-w-7xl mx-auto py-8 md:px-0 px-4">
         
         <!-- Summary Cards -->
         <Cards :summary="summary" />

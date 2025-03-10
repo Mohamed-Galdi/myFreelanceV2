@@ -26,64 +26,7 @@ const getInitials = (title) => {
 
 <template>
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        <!-- Work Status Card -->
-        <div
-            class="p-6 rounded-xl bg-gradient-to-br from-white to-orange-50 shadow-lg border border-orange-200"
-        >
-            <h2 class="text-xl font-bold text-orange-900 mb-6">Work Status</h2>
-            <div
-                v-for="(percentage, key) in workPercentages"
-                :key="key"
-                class="mb-6"
-            >
-                <div class="flex justify-between mb-2">
-                    <span class="font-medium capitalize text-orange-800">
-                        {{ key }} ({{ workStats[key] }})
-                    </span>
-                    <span class="font-medium text-orange-600"
-                        >{{ percentage.toFixed(0) }}%</span
-                    >
-                </div>
-                <div
-                    class="h-3 w-full bg-orange-100 rounded-full overflow-hidden"
-                >
-                    <div
-                        class="h-full rounded-full transition-all"
-                        :class="{
-                            'bg-emerald-500': key === 'completed',
-                            'bg-amber-500': key === 'ongoing',
-                            'bg-red-400': key === 'cancelled',
-                        }"
-                        :style="`width: ${percentage}%`"
-                    ></div>
-                </div>
-            </div>
-            <!-- Payment Status -->
-            <div class="mt-8 pt-6 border-t border-orange-300">
-                <h3 class="text-lg font-bold text-orange-900 mb-4">
-                    Payment Status
-                </h3>
-                <div class="grid grid-cols-2 gap-4">
-                    <div
-                        v-for="(count, status) in paymentStats"
-                        :key="status"
-                        class="flex flex-col items-center bg-opacity-75 p-3 rounded-lg shadow-md"
-                        :class="{
-                            'bg-emerald-100 text-emerald-700':
-                                status === 'paid',
-                            'bg-amber-100 text-amber-700': status === 'pending',
-                            'bg-sky-100 text-sky-700': status === 'refunded',
-                            'bg-red-100 text-red-700': status === 'cancelled',
-                        }"
-                    >
-                        <span class="font-medium capitalize">{{ status }}</span>
-                        <span class="text-2xl font-bold">{{ count }}</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Recent Projects Section -->
+         <!-- Recent Projects Section -->
         <div
             class="p-6 rounded-xl bg-gradient-to-br from-white to-blue-50 shadow-lg border border-blue-200 lg:col-span-2"
         >
@@ -159,6 +102,64 @@ const getInitials = (title) => {
                 <p>No projects found</p>
             </div>
         </div>
+        <!-- Work Status Card -->
+        <div
+            class="p-6 rounded-xl bg-gradient-to-br from-white to-orange-50 shadow-lg border border-orange-200"
+        >
+            <h2 class="text-xl font-bold text-orange-900 mb-6">Work Status</h2>
+            <div
+                v-for="(percentage, key) in workPercentages"
+                :key="key"
+                class="mb-6"
+            >
+                <div class="flex justify-between mb-2">
+                    <span class="font-medium capitalize text-orange-800">
+                        {{ key }} ({{ workStats[key] }})
+                    </span>
+                    <span class="font-medium text-orange-600"
+                        >{{ percentage.toFixed(0) }}%</span
+                    >
+                </div>
+                <div
+                    class="h-3 w-full bg-orange-100 rounded-full overflow-hidden"
+                >
+                    <div
+                        class="h-full rounded-full transition-all"
+                        :class="{
+                            'bg-emerald-500': key === 'completed',
+                            'bg-amber-500': key === 'ongoing',
+                            'bg-red-400': key === 'cancelled',
+                        }"
+                        :style="`width: ${percentage}%`"
+                    ></div>
+                </div>
+            </div>
+            <!-- Payment Status -->
+            <div class="mt-8 pt-6 border-t border-orange-300">
+                <h3 class="text-lg font-bold text-orange-900 mb-4">
+                    Payment Status
+                </h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div
+                        v-for="(count, status) in paymentStats"
+                        :key="status"
+                        class="flex flex-col items-center bg-opacity-75 p-3 rounded-lg shadow-md"
+                        :class="{
+                            'bg-emerald-100 text-emerald-700':
+                                status === 'paid',
+                            'bg-amber-100 text-amber-700': status === 'pending',
+                            'bg-sky-100 text-sky-700': status === 'refunded',
+                            'bg-red-100 text-red-700': status === 'cancelled',
+                        }"
+                    >
+                        <span class="font-medium capitalize">{{ status }}</span>
+                        <span class="text-2xl font-bold">{{ count }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+       
     </div>
 </template>
 

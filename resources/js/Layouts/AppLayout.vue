@@ -1,55 +1,34 @@
 <script setup>
 import { ref } from "vue";
 import Menubar from "primevue/menubar";
-
+import NavBar from "@/Components/NavBar.vue";
 const appName = import.meta.env.VITE_APP_NAME || "Laravel";
 
 const items = ref([
     {
         label: "Dashboard",
         icon: "pi pi-th-large",
-        to: "/dashboard",
+        to: route("dashboard"),
     },
     {
         label: "Clients",
         icon: "pi pi-users",
-        to: "/clients",
+        to: route("clients"),
     },
     {
         label: "Projects",
         icon: "pi pi-briefcase",
-        to: "/projects",
+        to: route("projects"),
     },
     {
-        label: "Work Sessions",
+        label: "Works",
         icon: "pi pi-calendar",
-        to: "/work-sessions",
-    },
-    {
-        label: "Reports",
-        icon: "pi pi-chart-bar",
-        items: [
-            {
-                label: "Revenue Overview",
-                icon: "pi pi-dollar",
-                to: "/reports/revenue",
-            },
-            {
-                label: "Client Analysis",
-                icon: "pi pi-chart-line",
-                to: "/reports/clients",
-            },
-            {
-                label: "Project Stats",
-                icon: "pi pi-chart-pie",
-                to: "/reports/projects",
-            },
-        ],
+        to: route("works"),
     },
     {
         label: "Settings",
         icon: "pi pi-cog",
-        to: "/settings",
+        to: route("settings"),
     },
 ]);
 </script>
@@ -63,22 +42,23 @@ const items = ref([
                     <!-- Logo and Brand -->
                     <div class="flex items-center">
                         <div class="flex-shrink-0 flex items-center">
-                            <span class="text-xl font-bold text-indigo-600"
-                                >{{ appName }}</span
-                            >
+                            <span class="text-xl font-bold text-indigo-600">{{
+                                appName
+                            }}</span>
                         </div>
                     </div>
 
                     <!-- Navigation Menu -->
                     <div class="flex items-center">
-                        <Menubar :model="items" class="border-none" />
+                        <!-- <Menubar :model="items" class="border-none" /> -->
+                         <NavBar :items="items" />
                     </div>
                 </div>
             </div>
         </header>
 
         <!-- Main Content -->
-        <main class="flex-1 p-6 container mx-auto">
+        <main class="">
             <slot></slot>
         </main>
 
