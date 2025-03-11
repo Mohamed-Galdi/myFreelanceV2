@@ -29,6 +29,9 @@ Route::middleware('auth')->group(function () {
     // Client Routes
     Route::get('/clients', [ClientController::class, 'index'])->name('clients');
     Route::get('/clients/{client}', [ClientController::class, 'show'])->name('client');
+    Route::post('/clients', [ClientController::class, 'store'])->name('admin.clients.store');
+    Route::post('/clients/{client}', [ClientController::class, 'update'])->name('admin.clients.update');
+    Route::post('/clients/{client}/delete', [ClientController::class, 'destroy'])->name('admin.clients.delete');
 
     // Project Routes
     Route::get('/projects', [ProjectController::class, 'index'])->name('projects');

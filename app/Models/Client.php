@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use App\Observers\ClientObserver;
 
-#[ObservedBy(ClientObserver::class)]
 class Client extends Model
 {
     use HasFactory;

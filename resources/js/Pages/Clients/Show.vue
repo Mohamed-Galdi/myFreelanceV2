@@ -1,7 +1,13 @@
 <script setup>
 import AppLayout from "@/Layouts/AppLayout.vue";
-import { Link } from "@inertiajs/vue3";
+import { Link, useForm } from "@inertiajs/vue3";
 import { computed, ref } from "vue";
+import Drawer from "primevue/drawer";
+import InputText from "primevue/inputtext";
+import Select from "primevue/select";
+import { useToast } from "primevue/usetoast";
+import Toast from "primevue/toast";
+
 
 const props = defineProps({
     client: Object,
@@ -12,7 +18,18 @@ defineOptions({
     layout: AppLayout,
 });
 
+const toast = useToast();
+
 const activeTab = ref("projects");
+
+const isMobile = computed(() => window.innerWidth <= 768);
+
+const sources = ref([
+    { name: "Upwork", value: "upwork" },
+    { name: "Recommendation", value: "recommendation" },
+    { name: "Baaeed", value: "baaeed" },
+    { name: "Other", value: "other" },
+]);
 
 const projectStatuses = computed(() => {
     const statuses = {
@@ -63,12 +80,105 @@ const formatDate = (dateString) => {
         day: "numeric",
     }).format(date);
 };
+
+// ######################################## edit client
+const openEditClientDrawer = ref(false);
+
+const editClientForm = useForm({
+    id: null,
+    name: "",
+    contact: "",
+    source: "",
+});
+
+function showEditClientDetails(client) {
+    editClientForm.id = client.id;
+    editClientForm.name = client.name;
+    editClientForm.contact = client.contact;
+    editClientForm.source = client.source;
+    openEditClientDrawer.value = true;
+}
+
+function updateClient() {
+    editClientForm.post(
+        route("admin.clients.update", { client: editClientForm.id }),
+        {
+            onSuccess: () => {
+                toast.add({
+                    severity: "success",
+                    summary: "Succes",
+                    detail: "Client updated successfully",
+                    life: 3000,
+                });
+                editClientForm.reset();
+                openEditClientDrawer.value = false;
+            },
+            onError: () => {
+                const errorMessage = Object.values(editClientForm.errors)[0];
+                toast.add({
+                    severity: "error",
+                    summary: "Erreur",
+                    detail: errorMessage,
+                    life: 3000,
+                });
+            },
+        }
+    );
+}
 </script>
 
 <template>
     <div
         class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-[calc(100vh-100px)]"
     >
+        <Toast position="top-center" />
+         <!-- Edit Client Drawer -->
+        <Drawer
+            v-model:visible="openEditClientDrawer"
+            header="Edit Client"
+            :style="{ width: isMobile ? '100%' : '50vw' }"
+            position="right"
+        >
+            <form
+                action=""
+                class="flex flex-col gap-6 py-3"
+                @submit.prevent="updateClient"
+            >
+                <InputText
+                    v-model="editClientForm.name"
+                    name="name"
+                    type="text"
+                    placeholder="Client Name"
+                    autofocus
+                    class="w-full"
+                />
+                <InputText
+                    v-model="editClientForm.contact"
+                    name="contact"
+                    type="text"
+                    placeholder="Client Contact"
+                    autofocus
+                    class="w-full"
+                />
+                <Select
+                    v-model="editClientForm.source"
+                    name="source"
+                    :options="sources"
+                    optionLabel="name"
+                    optionValue="value"
+                    placeholder="Client Source"
+                    class="w-full"
+                />
+                <button
+                    class="w-full"
+                    :class="editClientForm.processing ? 'btn-disabled' : 'btn'"
+                    :disabled="editClientForm.processing"
+                >
+                    <span v-if="editClientForm.processing">processing... </span>
+                    <span v-else>Update Client</span>
+                </button>
+            </form>
+        </Drawer>
         <!-- Back button and header -->
         <div class="flex items-center mb-6">
             <Link
@@ -111,6 +221,7 @@ const formatDate = (dateString) => {
                 </div>
                 <div class="mt-4 sm:mt-0 flex space-x-3">
                     <button
+                        @click="showEditClientDetails(client)"
                         class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition duration-150"
                     >
                         Edit Client

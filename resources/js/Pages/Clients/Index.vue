@@ -1,7 +1,15 @@
 <script setup>
 import AppLayout from "@/Layouts/AppLayout.vue";
-import { Link, router } from "@inertiajs/vue3";
-import { ref } from "vue";
+import { Link, router, useForm } from "@inertiajs/vue3";
+import { debounce } from "lodash";
+import { ref, watch, computed } from "vue";
+import Drawer from "primevue/drawer";
+import InputText from "primevue/inputtext";
+import Select from "primevue/select";
+import { useToast } from "primevue/usetoast";
+import Toast from "primevue/toast";
+import ConfirmDialog from "primevue/confirmdialog";
+import { useConfirm } from "primevue/useconfirm";
 
 const props = defineProps({
     clients: Object,
@@ -12,15 +20,283 @@ defineOptions({
     layout: AppLayout,
 });
 
+const toast = useToast();
+const confirm = useConfirm();
+
 function showClientDetails(client) {
-    router.get(route('client', { client: client.id }));
+    router.get(route("client", { client: client.id }));
 }
+
+const isMobile = computed(() => window.innerWidth <= 768);
+
+const sources = ref([
+    { name: "Upwork", value: "upwork" },
+    { name: "Recommendation", value: "recommendation" },
+    { name: "Baaeed", value: "baaeed" },
+    { name: "Other", value: "other" },
+]);
+
+// ######################################## search clients
+const search = ref(props.searchTerm);
+const debouncedSearch = ref(props.searchTerm);
+watch(
+    search,
+    debounce((query) => {
+        // Update the table
+        router.get(
+            route("clients"),
+            {
+                search: query,
+            },
+            {
+                preserveState: true,
+                preserveScroll: true,
+            }
+        );
+        // Update the debounced search value
+        debouncedSearch.value = query;
+    }, 300)
+);
+// ######################################## create client
+const openNewClientDrawer = ref(false);
+
+const newClientForm = useForm({
+    name: "",
+    contact: "",
+    source: "",
+});
+
+function createClient() {
+    newClientForm.post(route("admin.clients.store"), {
+        onSuccess: () => {
+            toast.add({
+                severity: "success",
+                summary: "Succes",
+                detail: "Client created successfully",
+                life: 3000,
+            });
+            newClientForm.reset();
+            openNewClientDrawer.value = false;
+        },
+        onError: () => {
+            const errorMessage = Object.values(newClientForm.errors)[0];
+            toast.add({
+                severity: "error",
+                summary: "Erreur",
+                detail: errorMessage,
+                life: 3000,
+            });
+        },
+    });
+}
+
+// ######################################## edit client
+const openEditClientDrawer = ref(false);
+
+const editClientForm = useForm({
+    id: null,
+    name: "",
+    contact: "",
+    source: "",
+});
+
+function showEditClientDetails(client) {
+    editClientForm.id = client.id;
+    editClientForm.name = client.name;
+    editClientForm.contact = client.contact;
+    editClientForm.source = client.source;
+    openEditClientDrawer.value = true;
+}
+
+function updateClient() {
+    editClientForm.post(
+        route("admin.clients.update", { client: editClientForm.id }),
+        {
+            onSuccess: () => {
+                toast.add({
+                    severity: "success",
+                    summary: "Succes",
+                    detail: "Client updated successfully",
+                    life: 3000,
+                });
+                editClientForm.reset();
+                openEditClientDrawer.value = false;
+            },
+            onError: () => {
+                const errorMessage = Object.values(editClientForm.errors)[0];
+                toast.add({
+                    severity: "error",
+                    summary: "Erreur",
+                    detail: errorMessage,
+                    life: 3000,
+                });
+            },
+        }
+    );
+}
+
+// ######################################## delete client
+const deleteClient = (clientId) => {
+    confirm.require({
+        group: "templating",
+        message: "Are you sure you want to delete this client?",
+        header: "Confirm Deletion",
+        rejectProps: {
+            label: "Cancel",
+            severity: "secondary",
+            outlined: true,
+        },
+        acceptProps: {
+            label: "Delete",
+            severity: "danger",
+        },
+        accept: () => {
+            router.post(route("admin.clients.delete", { client: clientId }));
+            setTimeout(() => {
+                toast.add({
+                    severity: "success",
+                    summary: "Succes",
+                    detail: "Client deleted successfully",
+                    life: 3000,
+                });
+            }, 500);
+        },
+    });
+};
 </script>
 
 <template>
     <div
         class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-[calc(100vh-100px)]"
     >
+        <Toast position="top-center" />
+        <!-- Create Client Drawer -->
+        <Drawer
+            v-model:visible="openNewClientDrawer"
+            header="Create New Client"
+            :style="{ width: isMobile ? '100%' : '50vw' }"
+            position="right"
+        >
+            <form
+                action=""
+                class="flex flex-col gap-6 py-3"
+                @submit.prevent="createClient"
+            >
+                <InputText
+                    v-model="newClientForm.name"
+                    name="name"
+                    type="text"
+                    placeholder="Client Name"
+                    autofocus
+                    class="w-full"
+                />
+                <InputText
+                    v-model="newClientForm.contact"
+                    name="contact"
+                    type="text"
+                    placeholder="Client Contact"
+                    autofocus
+                    class="w-full"
+                />
+                <Select
+                    v-model="newClientForm.source"
+                    name="source"
+                    :options="sources"
+                    optionLabel="name"
+                    optionValue="value"
+                    placeholder="Client Source"
+                    class="w-full"
+                />
+                <button
+                    class="w-full"
+                    :class="newClientForm.processing ? 'btn-disabled' : 'btn'"
+                    :disabled="newClientForm.processing"
+                >
+                    <span v-if="newClientForm.processing">processing... </span>
+                    <span v-else>Create Client</span>
+                </button>
+            </form>
+        </Drawer>
+
+        <!-- Edit Client Drawer -->
+        <Drawer
+            v-model:visible="openEditClientDrawer"
+            header="Edit Client"
+            :style="{ width: isMobile ? '100%' : '50vw' }"
+            position="right"
+        >
+            <form
+                action=""
+                class="flex flex-col gap-6 py-3"
+                @submit.prevent="updateClient"
+            >
+                <InputText
+                    v-model="editClientForm.name"
+                    name="name"
+                    type="text"
+                    placeholder="Client Name"
+                    autofocus
+                    class="w-full"
+                />
+                <InputText
+                    v-model="editClientForm.contact"
+                    name="contact"
+                    type="text"
+                    placeholder="Client Contact"
+                    autofocus
+                    class="w-full"
+                />
+                <Select
+                    v-model="editClientForm.source"
+                    name="source"
+                    :options="sources"
+                    optionLabel="name"
+                    optionValue="value"
+                    placeholder="Client Source"
+                    class="w-full"
+                />
+                <button
+                    class="w-full"
+                    :class="editClientForm.processing ? 'btn-disabled' : 'btn'"
+                    :disabled="editClientForm.processing"
+                >
+                    <span v-if="editClientForm.processing">processing... </span>
+                    <span v-else>Update Client</span>
+                </button>
+            </form>
+        </Drawer>
+
+        <!-- Confirm Dialog -->
+        <ConfirmDialog group="templating" class="w-full md:w-1/2 lg:w-1/3 mx-8">
+            <template #message="slotProps">
+                <div class="flex flex-col items-center justify-center w-full">
+                    <div class="bg-rose-500 rounded-full p-3 mb-4">
+                        <svg
+                            class="h-8 w-8 text-white"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                        </svg>
+                    </div>
+                    <div class="w-full">
+                        <h2
+                            class="text-xl font-bold text-gray-800 mb-4 text-center"
+                        >
+                            Confirm Deletion
+                        </h2>
+                        <p>Are you sure you want to delete this client?</p>
+                    </div>
+                </div>
+            </template>
+        </ConfirmDialog>
+
         <!-- Header with title, stats and create button -->
         <div
             class="grid md:grid-cols-3 mb-8 place-items-center gap-4 grid-cols-2"
@@ -44,8 +320,8 @@ function showClientDetails(client) {
             <div
                 class="flex items-center gap-4 self-stretch sm:self-auto md:justify-end justify-start w-full"
             >
-                <Link
-                    href="#"
+                <button
+                    @click="openNewClientDrawer = true"
                     class="inline-flex items-center justify-center px-4 py-2 bg-rose-500 text-white rounded-lg shadow-sm hover:bg-rose-600 transition duration-150"
                 >
                     <svg
@@ -63,35 +339,20 @@ function showClientDetails(client) {
                         />
                     </svg>
                     New Client
-                </Link>
+                </button>
             </div>
         </div>
 
         <!-- Search bar -->
         <div class="mb-8">
             <div class="relative max-w-md">
-                <input
+                <InputText
+                    v-model="search"
+                    name="search"
                     type="text"
-                    placeholder="Search clients..."
-                    class="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-rose-200 focus:border-rose-400 focus:outline-none transition duration-150"
+                    placeholder="Search clients"
+                    class="w-[20vw]"
                 />
-                <div
-                    class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
-                >
-                    <svg
-                        class="h-5 w-5 text-gray-400"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                        />
-                    </svg>
-                </div>
             </div>
         </div>
 
@@ -216,6 +477,7 @@ function showClientDetails(client) {
                         </button>
                         <div class="flex space-x-3">
                             <button
+                                @click="showEditClientDetails(client)"
                                 class="p-1 rounded-full text-gray-400 hover:text-gray-600 transition duration-150"
                             >
                                 <svg
@@ -234,6 +496,7 @@ function showClientDetails(client) {
                                 </svg>
                             </button>
                             <button
+                                @click="deleteClient(client.id)"
                                 class="p-1 rounded-full text-gray-400 hover:text-gray-600 transition duration-150"
                             >
                                 <svg

@@ -1,3 +1,36 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+    --primary-color: oklch(0.554 0.046 257.417) !important;
+    --primary-color-text: oklch(0.208 0.042 265.755) !important;
+    --p-primary-50: oklch(0.984 0.003 247.858) !important;
+    --p-primary-100: oklch(0.968 0.007 247.896) !important;
+    --p-primary-200: oklch(0.929 0.013 255.508) !important;
+    --p-primary-300: oklch(0.869 0.022 252.894) !important;
+    --p-primary-400: oklch(0.704 0.04 256.788) !important;
+    --p-primary-500: oklch(0.554 0.046 257.417) !important;
+    --p-primary-600: oklch(0.446 0.043 257.281) !important;
+    --p-primary-700: oklch(0.372 0.044 257.287) !important;
+    --p-primary-800: oklch(0.279 0.041 260.031) !important;
+    --p-primary-900: oklch(0.208 0.042 265.755) !important;
+    --p-primary-950: oklch(0.129 0.042 264.695) !important;
+
+    --p-select-focus-border-color: #262626 !important;
+    --p-multiselect-focus-border-color: #262626 !important;
+}
+
+@layer utilities {
+    .btn {
+        @apply bg-slate-700 hover:bg-slate-800 text-white rounded-lg py-2 px-4 text-center transition-all duration-300 ease-in-out;
+    }
+
+    .btn-secondary {
+        @apply bg-slate-500 hover:bg-slate-600 text-white rounded-lg py-2 px-4 text-center transition-all duration-300 ease-in-out;
+    }
+
+    .btn-disabled {
+        @apply bg-slate-500 text-white rounded-lg py-2 px-4 text-center transition-all duration-300 ease-in-out cursor-not-allowed;
+    }
+}

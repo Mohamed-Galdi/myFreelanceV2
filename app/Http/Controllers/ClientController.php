@@ -9,15 +9,21 @@ class ClientController extends Controller
 {
     public function index(Request $request)
     {
-        $clients = Client::orderBy('name')
+        $clients = Client::when($request->search, function ($query) use ($request) {
+            $query->where('name', 'like', '%' . $request->search . '%');
+        })
+            ->orderBy('created_at', 'desc')
             ->paginate(9)
             ->withQueryString();
 
         $totalClients = Client::count();
 
+        $searchTerm = $request->get('search');
+
         return inertia('Clients/Index', [
             'clients' => $clients,
-            'totalClients' => $totalClients
+            'totalClients' => $totalClients,
+            'searchTerm' => $searchTerm
         ]);
     }
 
@@ -63,5 +69,44 @@ class ClientController extends Controller
             'client' => $client,
             'metrics' => $metrics
         ]);
+    }
+
+    public function store(Request $request)
+    {
+        $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'contact' => ['required', 'string', 'max:255'],
+            'source' => ['required', 'string', 'max:255'],
+        ]);
+        Client::create([
+            'name' => $request->name,
+            'contact' => $request->contact,
+            'source' => $request->source,
+        ]);
+        return '';
+    }
+
+    public function update(Request $request, $id)
+    {
+        $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'contact' => ['required', 'string', 'max:255'],
+            'source' => ['required', 'string', 'max:255'],
+        ]);
+
+        $client = Client::findOrFail($id);
+        $client->name = $request->name;
+        $client->contact = $request->contact;
+        $client->source = $request->source;
+        $client->save();
+
+        return '';
+    }
+
+    public function destroy($id)
+    {
+        $client = Client::findOrFail($id);
+        $client->delete();
+        return '';
     }
 }
