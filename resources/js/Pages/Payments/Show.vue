@@ -1,5 +1,10 @@
 <script setup>
 import AppLayout from "@/Layouts/AppLayout.vue";
+import { Link } from "@inertiajs/vue3";
+
+const props = defineProps({
+    payment: Object,
+});
 
 defineOptions({
     layout: AppLayout,
@@ -7,5 +12,5 @@ defineOptions({
 </script>
 
 <template>
-<div class="h-screen p-8">Work</div>
+    <p>Payment</p>
 </template>

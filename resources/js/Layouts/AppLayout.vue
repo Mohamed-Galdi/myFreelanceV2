@@ -27,6 +27,11 @@ const items = ref([
         to: route("works"),
     },
     {
+        label: "Payments",
+        icon: "pi pi-credit-card",
+        to: route("payments"),
+    },
+    {
         label: "Settings",
         icon: "pi pi-cog",
         to: route("settings"),

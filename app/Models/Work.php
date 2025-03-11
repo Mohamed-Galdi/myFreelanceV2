@@ -32,6 +32,11 @@ class Work extends Model
         return $this->belongsTo(Project::class);
     }
 
+    public function payments()
+    {
+        return $this->hasMany(Payment::class);
+    }
+
     protected static function booted()
     {
         static::saved(function ($work) {

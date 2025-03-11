@@ -3,6 +3,7 @@
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\SettingsController;
@@ -27,12 +28,19 @@ Route::middleware('auth')->group(function () {
 
     // Client Routes
     Route::get('/clients', [ClientController::class, 'index'])->name('clients');
+    Route::get('/clients/{client}', [ClientController::class, 'show'])->name('client');
 
     // Project Routes
     Route::get('/projects', [ProjectController::class, 'index'])->name('projects');
+    Route::get('/projects/{project}', [ProjectController::class, 'show'])->name('project');
 
-    // Work Session Routes
+    // Work Routes
     Route::get('/works', [WorkController::class, 'index'])->name('works');
+    Route::get('/works/{work}', [WorkController::class, 'show'])->name('work');
+
+    // Payment Routes
+    Route::get('/payments', [PaymentController::class, 'index'])->name('payments');
+    Route::get('/payments/{payment}', [PaymentController::class, 'show'])->name('payment');
 
     // Settings Routes
     Route::get('/settings', [SettingsController::class, 'index'])->name('settings');
