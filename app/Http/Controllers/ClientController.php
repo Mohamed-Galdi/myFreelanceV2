@@ -107,6 +107,6 @@ class ClientController extends Controller
     {
         $client = Client::findOrFail($id);
         $client->delete();
-        return '';
+        return redirect()->route('clients');
     }
 }

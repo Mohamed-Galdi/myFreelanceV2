@@ -716,8 +716,8 @@ const deleteProject = () => {
                 <div
                     class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100"
                 >
-                    <div class="p-6 bg-amber-50 border-b border-amber-100">
-                        <h2 class="text-xl font-semibold text-amber-800">
+                    <div class="p-6 bg-teal-50 border-b border-teal-100">
+                        <h2 class="text-xl font-semibold text-teal-800">
                             Project Revenue
                         </h2>
                     </div>
@@ -743,8 +743,8 @@ const deleteProject = () => {
                 <div
                     class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100"
                 >
-                    <div class="p-6 border-b border-gray-100">
-                        <h2 class="text-xl font-semibold text-gray-800">
+                    <div class="p-6  bg-sky-50 border-b border-sky-100">
+                        <h2 class="text-xl font-semibold text-sky-800">
                             Work Stats
                         </h2>
                     </div>

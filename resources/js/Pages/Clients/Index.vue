@@ -30,10 +30,10 @@ function showClientDetails(client) {
 const isMobile = computed(() => window.innerWidth <= 768);
 
 const sources = ref([
-    { name: "Upwork", value: "upwork" },
-    { name: "Recommendation", value: "recommendation" },
-    { name: "Baaeed", value: "baaeed" },
-    { name: "Other", value: "other" },
+    "Upwork",
+    "Recommendation",
+    "Baaeed",
+    "Other",
 ]);
 
 // ######################################## search clients
@@ -202,8 +202,6 @@ const deleteClient = (clientId) => {
                     v-model="newClientForm.source"
                     name="source"
                     :options="sources"
-                    optionLabel="name"
-                    optionValue="value"
                     placeholder="Client Source"
                     class="w-full"
                 />
@@ -250,8 +248,6 @@ const deleteClient = (clientId) => {
                     v-model="editClientForm.source"
                     name="source"
                     :options="sources"
-                    optionLabel="name"
-                    optionValue="value"
                     placeholder="Client Source"
                     class="w-full"
                 />

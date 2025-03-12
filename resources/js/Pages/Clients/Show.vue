@@ -1,12 +1,14 @@
 <script setup>
 import AppLayout from "@/Layouts/AppLayout.vue";
-import { Link, useForm } from "@inertiajs/vue3";
+import { Link, useForm, router } from "@inertiajs/vue3";
 import { computed, ref } from "vue";
 import Drawer from "primevue/drawer";
 import InputText from "primevue/inputtext";
 import Select from "primevue/select";
 import { useToast } from "primevue/usetoast";
 import Toast from "primevue/toast";
+import ConfirmDialog from "primevue/confirmdialog";
+import { useConfirm } from "primevue/useconfirm";
 
 const props = defineProps({
     client: Object,
@@ -18,16 +20,20 @@ defineOptions({
 });
 
 const toast = useToast();
+const confirm = useConfirm();
+
+
+const client = props.client;
 
 const activeTab = ref("projects");
 
 const isMobile = computed(() => window.innerWidth <= 768);
 
 const sources = ref([
-    { name: "Upwork", value: "upwork" },
-    { name: "Recommendation", value: "recommendation" },
-    { name: "Baaeed", value: "baaeed" },
-    { name: "Other", value: "other" },
+    "Upwork",
+    "Recommendation",
+    "Baaeed",
+    "Other",
 ]);
 
 const projectStatuses = computed(() => {
@@ -84,24 +90,18 @@ const formatDate = (dateString) => {
 const openEditClientDrawer = ref(false);
 
 const editClientForm = useForm({
-    id: null,
-    name: "",
-    contact: "",
-    source: "",
+    id: client.id,
+    name: client.name,
+    contact: client.contact,
+    source: client.source,
 });
 
-function showEditClientDetails(client) {
-    editClientForm.id = client.id;
-    editClientForm.name = client.name;
-    editClientForm.contact = client.contact;
-    editClientForm.source = client.source;
-    openEditClientDrawer.value = true;
-}
 
 function updateClient() {
     editClientForm.post(
         route("admin.clients.update", { client: editClientForm.id }),
         {
+            preserveState: false,
             onSuccess: () => {
                 toast.add({
                     severity: "success",
@@ -124,6 +124,35 @@ function updateClient() {
         }
     );
 }
+
+// ######################################## delete client
+function deleteClient() {
+    confirm.require({
+        group: "templating",
+        message: "Are you sure you want to delete this client?",
+        header: "Confirm Deletion",
+        rejectProps: {
+            label: "Cancel",
+            severity: "secondary",
+            outlined: true,
+        },
+        acceptProps: {
+            label: "Delete",
+            severity: "danger",
+        },
+        accept: () => {
+            router.post(route("admin.clients.delete", { client: client.id }));
+            setTimeout(() => {
+                toast.add({
+                    severity: "success",
+                    summary: "Succes",
+                    detail: "Client deleted successfully",
+                    life: 3000,
+                });
+            }, 500);
+        },
+    });
+};
 </script>
 
 <template>
@@ -163,8 +192,6 @@ function updateClient() {
                     v-model="editClientForm.source"
                     name="source"
                     :options="sources"
-                    optionLabel="name"
-                    optionValue="value"
                     placeholder="Client Source"
                     class="w-full"
                 />
@@ -178,6 +205,38 @@ function updateClient() {
                 </button>
             </form>
         </Drawer>
+
+         <!-- Confirm Dialog -->
+        <ConfirmDialog group="templating" class="w-full md:w-1/2 lg:w-1/3 mx-8">
+            <template #message="slotProps">
+                <div class="flex flex-col items-center justify-center w-full">
+                    <div class="bg-rose-500 rounded-full p-3 mb-4">
+                        <svg
+                            class="h-8 w-8 text-white"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                        </svg>
+                    </div>
+                    <div class="w-full">
+                        <h2
+                            class="text-xl font-bold text-gray-800 mb-4 text-center"
+                        >
+                            Confirm Deletion
+                        </h2>
+                        <p>Are you sure you want to delete this client?</p>
+                    </div>
+                </div>
+            </template>
+        </ConfirmDialog>
+
         <!-- Back button and header -->
         <div class="mb-6">
             <Link
@@ -217,12 +276,49 @@ function updateClient() {
                         Source: {{ client.source }}
                     </p>
                 </div>
-                <div class="mt-4 sm:mt-0 flex space-x-3">
+                <!-- Edit / Delete buttons -->
+                <div class="flex items-center gap-2">
+                    <!-- Edit button -->
                     <button
-                        @click="showEditClientDetails(client)"
-                        class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition duration-150"
+                        @click="openEditClientDrawer = true"
+                        class="w-full flex items-center justify-center px-4 py-2 bg-white border border-amber-300 text-amber-700 rounded-lg shadow-sm hover:bg-amber-50 transition duration-150"
                     >
-                        Edit Client
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            class="h-5 w-5 mr-2"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                            />
+                        </svg>
+                        <p class="text-nowrap">Edit Project</p>
+                    </button>
+                    <!-- Delete button -->
+                    <button
+                        @click="deleteClient()"
+                        class="w-full flex items-center justify-center px-4 py-2 bg-white border border-red-300 text-red-700 rounded-lg shadow-sm hover:bg-red-50 transition duration-150"
+                    >
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            class="h-5 w-5 mr-2"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                            />
+                        </svg>
+                        <p class="text-nowrap">Delete Project</p>
                     </button>
                 </div>
             </div>
