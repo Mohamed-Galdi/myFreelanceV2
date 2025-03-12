@@ -7,6 +7,7 @@ use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\SettingsController;
+use App\Http\Controllers\TempFileController;
 use App\Http\Controllers\WorkController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -36,6 +37,9 @@ Route::middleware('auth')->group(function () {
     // Project Routes
     Route::get('/projects', [ProjectController::class, 'index'])->name('projects');
     Route::get('/projects/{project}', [ProjectController::class, 'show'])->name('project');
+    Route::post('/projects', [ProjectController::class, 'store'])->name('admin.projects.store');
+    Route::post('/projects/{project}', [ProjectController::class, 'update'])->name('admin.projects.update');
+    Route::post('/projects/{project}/delete', [ProjectController::class, 'destroy'])->name('admin.projects.delete');
 
     // Work Routes
     Route::get('/works', [WorkController::class, 'index'])->name('works');
@@ -48,7 +52,13 @@ Route::middleware('auth')->group(function () {
     // Settings Routes
     Route::get('/settings', [SettingsController::class, 'index'])->name('settings');
 
+    // file upload
+    Route::post('/upload', [TempFileController::class, 'upload'])->name('file.upload');
+    Route::post('/revert/{id}', [TempFileController::class, 'revert'])->name('file.revert');
+
     // Logout Route
     Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])
             ->name('logout');
 });
+
+

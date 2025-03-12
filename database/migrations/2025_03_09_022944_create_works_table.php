@@ -18,9 +18,8 @@ return new class extends Migration
             $table->decimal('price', 10, 2);
             $table->date('start_date')->nullable();
             $table->date('end_date')->nullable();
-            $table->enum('project_status', ['ongoing', 'completed', 'cancelled'])->default('ongoing');
-            $table->enum('payment_status', ['paid', 'pending', 'refunded', 'cancelled'])->default('pending');
-            $table->enum('payment_method', ['paypal', 'bank_transfer', 'platform', 'other'])->nullable();
+            $table->enum('status', ['ongoing', 'completed', 'cancelled'])->default('ongoing');
+            $table->enum('payment_status', ['partial','paid', 'pending', 'refunded', 'cancelled'])->default('pending');
             $table->timestamps();
         });
     }

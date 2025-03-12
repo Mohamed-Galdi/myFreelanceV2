@@ -11,13 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('payments', function (Blueprint $table) {
+        Schema::create('temp_files', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('work_id')->constrained()->onDelete('cascade');
-            $table->decimal('amount', 10, 2);
-            $table->date('payment_date');
-            $table->string('payment_method')->nullable();
-            $table->text('note')->nullable();
+            $table->string('name');
+            $table->string('folder');
+            $table->string('path');
+            $table->string('type');
             $table->timestamps();
         });
     }
@@ -27,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('payments');
+        Schema::dropIfExists('temp_files');
     }
 };

@@ -30,9 +30,9 @@ class DashboardController extends Controller
         // Work status counts
         $workStats = [
             'total' => Work::count(),
-            'completed' => Work::where('project_status', 'completed')->count(),
-            'ongoing' => Work::where('project_status', 'ongoing')->count(),
-            'cancelled' => Work::where('project_status', 'cancelled')->count(),
+            'completed' => Work::where('status', 'completed')->count(),
+            'ongoing' => Work::where('status', 'ongoing')->count(),
+            'cancelled' => Work::where('status', 'cancelled')->count(),
         ];
 
         // Payment status counts
@@ -49,14 +49,12 @@ class DashboardController extends Controller
         // Upcoming and overdue works
         $today = Carbon::today();
         $upcomingWorks = Work::with('project.client')
-            ->where('project_status', 'ongoing')
             ->where('end_date', '>=', $today)
             ->orderBy('end_date')
             ->take(5)
             ->get();
 
         $overdueWorks = Work::with('project.client')
-            ->where('project_status', 'ongoing')
             ->where('end_date', '<', $today)
             ->orderBy('end_date')
             ->take(5)

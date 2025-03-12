@@ -1,16 +1,30 @@
 <script setup>
 import AppLayout from "@/Layouts/AppLayout.vue";
-import { Link, router } from "@inertiajs/vue3";
+import { Link, router, useForm } from "@inertiajs/vue3";
+import Drawer from "primevue/drawer";
+import InputText from "primevue/inputtext";
+import Select from "primevue/select";
+import { useToast } from "primevue/usetoast";
+import Toast from "primevue/toast";
+import ConfirmDialog from "primevue/confirmdialog";
+import { useConfirm } from "primevue/useconfirm";
+import { ref, watch, computed } from "vue";
+import FileUpload from "@/Components/FileUpload.vue";
+import MultiSelect from "primevue/multiselect";
+
 
 const props = defineProps({
     projects: Object,
     totalProjects: Number,
-    totalRevenue: Number,
+    clients: Array,
 });
 
 defineOptions({
     layout: AppLayout,
 });
+
+const toast = useToast();
+const confirm = useConfirm();
 
 // Format currency
 const formatCurrency = (value) => {
@@ -21,42 +35,289 @@ const formatCurrency = (value) => {
 };
 
 function showProjectDetails(project) {
-    router.get(route('project', { project: project.id }));
+    router.get(route("project", { project: project.id }));
 }
+
+const isMobile = computed(() => window.innerWidth <= 768);
+
+const clients = props.clients;
+
+const techStacks = [
+    { label: "React", value: "react" },
+    { label: "Vue", value: "vue" },
+    { label: "Laravel", value: "laravel" },
+    { label: "PHP", value: "php" },
+    { label: "JavaScript", value: "javascript" },
+    { label: "Tailwind CSS", value: "tailwindcss" },
+];
+
+// ######################################## file upload
+// logo
+const logoTempFile = ref(null);
+function handleLogoFileUploaded(fileFolder) {
+    logoTempFile.value = fileFolder;
+}
+
+function handleLogoFileReverted() {
+    logoTempFile.value = null;
+}
+
+// image
+const imageTempFile = ref(null);
+function handleImageFileUploaded(fileFolder) {
+    imageTempFile.value = fileFolder;
+}
+
+function handleImageFileReverted() {
+    imageTempFile.value = null;
+}
+
+// ######################################## create project
+const openNewProjectDrawer = ref(false);
+
+const newProjectForm = useForm({
+    clientId: "",
+    title: "",
+    description: "",
+    logo: "",
+    image: "",
+    tech_stack: "",
+    github_repo: "",
+    live_link: "",
+});
+
+function createProject() {
+    newProjectForm.logo = logoTempFile.value;
+    newProjectForm.image = imageTempFile.value;
+    newProjectForm.post(route("admin.projects.store"), {
+        onSuccess: () => {
+            toast.add({
+                severity: "success",
+                summary: "Succes",
+                detail: "Project created successfully",
+                life: 3000,
+            });
+            newProjectForm.reset();
+            openNewProjectDrawer.value = false;
+        },
+        onError: () => {
+            const errorMessage = Object.values(newProjectForm.errors)[0];
+            toast.add({
+                severity: "error",
+                summary: "Erreur",
+                detail: errorMessage,
+                life: 3000,
+            });
+        },
+    });
+}
+
+// ######################################## edit project
+const openEditProjectDrawer = ref(false);
+
+const editProjectForm = useForm({
+    id: null,
+    name: "",
+    client: "",
+    logo: "",
+    title: "",
+    description: "",
+    tech_stack: "",
+    github_repo: "",
+    live_link: "",
+    work_count: 0,
+    total_revenue: 0,
+});
+
+function showEditProjectDetails(project) {
+    editProjectForm.id = project.id;
+    editProjectForm.name = project.name;
+    editProjectForm.client = project.client.id;
+    editProjectForm.logo = project.logo;
+    editProjectForm.title = project.title;
+    editProjectForm.description = project.description;
+    editProjectForm.tech_stack = project.tech_stack;
+    editProjectForm.github_repo = project.github_repo;
+    editProjectForm.live_link = project.live_link;
+    editProjectForm.work_count = project.work_count;
+    editProjectForm.total_revenue = project.total_revenue;
+    openEditProjectDrawer.value = true;
+}
+
+function updateProject() {
+    editProjectForm.post(
+        route("admin.projects.update", { project: editProjectForm.id }),
+        {
+            onSuccess: () => {
+                toast.add({
+                    severity: "success",
+                    summary: "Succes",
+                    detail: "Project updated successfully",
+                    life: 3000,
+                });
+                editProjectForm.reset();
+                openEditProjectDrawer.value = false;
+            },
+            onError: () => {
+                const errorMessage = Object.values(editProjectForm.errors)[0];
+                toast.add({
+                    severity: "error",
+                    summary: "Erreur",
+                    detail: errorMessage,
+                    life: 3000,
+                });
+            },
+        }
+    );
+}
+
+// ######################################## delete project
+const deleteProject = (projectId) => {
+    confirm.require({
+        group: "templating",
+        message: "Are you sure you want to delete this project?",
+        header: "Confirm Deletion",
+        rejectProps: {
+            label: "Cancel",
+            severity: "secondary",
+            outlined: true,
+        },
+        acceptProps: {
+            label: "Delete",
+            severity: "danger",
+        },
+        accept: () => {
+            router.post(route("admin.projects.delete", { project: projectId }));
+            setTimeout(() => {
+                toast.add({
+                    severity: "success",
+                    summary: "Succes",
+                    detail: "Project deleted successfully",
+                    life: 3000,
+                });
+            }, 500);
+        },
+    });
+};
 </script>
 
 <template>
     <div
         class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-[calc(100vh-100px)]"
     >
+        <Toast position="top-center" />
+
+        <!-- Create Project Drawer -->
+        <Drawer
+            v-model:visible="openNewProjectDrawer"
+            header="Create New Project"
+            :style="{ width: isMobile ? '100%' : '50vw' }"
+            position="right"
+        >
+            <form
+                action=""
+                class="flex flex-col gap-6 py-3"
+                @submit.prevent="createProject"
+            >
+                <Select
+                    v-model="newProjectForm.clientId"
+                    name="clientId"
+                    :options="clients"
+                    optionLabel="name"
+                    optionValue="id"
+                    placeholder="Project Client"
+                    class="w-full"
+                />
+                <InputText
+                    v-model="newProjectForm.title"
+                    name="title"
+                    type="text"
+                    placeholder="Project Title"
+                    autofocus
+                    class="w-full"
+                />
+                <InputText
+                    v-model="newProjectForm.description"
+                    name="description"
+                    type="text"
+                    placeholder="Project Description"
+                    autofocus
+                    class="w-full"
+                />
+
+                <div>
+                    <p class="ms-1 text-sm text-slate-600">Project Logo</p>
+
+                    <FileUpload
+                        @file-uploaded="handleLogoFileUploaded"
+                        @file-reverted="handleLogoFileReverted"
+                    />
+                </div>
+                <div>
+                    <p class="ms-1 text-sm text-slate-600">Project Image</p>
+                    <FileUpload
+                        @file-uploaded="handleImageFileUploaded"
+                        @file-reverted="handleImageFileReverted"
+                    />
+                </div>
+                <MultiSelect
+                    v-model="newProjectForm.tech_stack"
+                    :options="techStacks"
+                    optionLabel="label"
+                    optionValue="value"
+                    placeholder="Tech Stack"
+                    class="w-full"
+                />
+                <InputText
+                    v-model="newProjectForm.github_repo"
+                    name="github_repo"
+                    type="text"
+                    placeholder="Project Github Repo"
+                    autofocus
+                    class="w-full"
+                />
+                <InputText
+                    v-model="newProjectForm.live_link"
+                    name="live_link"
+                    type="text"
+                    placeholder="Project Live Link"
+                    autofocus
+                    class="w-full"
+                />
+                <button
+                    class="w-full"
+                    :class="newProjectForm.processing ? 'btn-disabled' : 'btn'"
+                    :disabled="newProjectForm.processing"
+                >
+                    <span v-if="newProjectForm.processing">processing... </span>
+                    <span v-else>Create Project</span>
+                </button>
+            </form>
+        </Drawer>
+
         <!-- Header with title, stats and create button -->
         <div
-            class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4"
+            class="grid md:grid-cols-3 mb-8 place-items-center gap-4 grid-cols-2"
         >
-            <div>
+            <div class="w-full">
                 <h1 class="text-3xl font-bold text-gray-800">Projects</h1>
-                <p class="text-gray-500 mt-1">Manage your project portfolio</p>
+                <p class="text-gray-500 mt-1">Manage clients projects</p>
             </div>
 
-            <div class="flex items-center gap-4 self-stretch sm:self-auto">
-                <div
-                    class="bg-white rounded-xl shadow-sm px-5 py-3 border border-gray-100"
-                >
-                    <p class="text-sm text-gray-500">Total Projects</p>
-                    <p class="text-2xl font-semibold text-gray-800">
-                        {{ totalProjects }}
-                    </p>
-                </div>
-                <div
-                    class="bg-white rounded-xl shadow-sm px-5 py-3 border border-gray-100"
-                >
-                    <p class="text-sm text-gray-500">Total Revenue</p>
-                    <p class="text-2xl font-semibold text-emerald-600">
-                        {{ formatCurrency(totalRevenue) }}
-                    </p>
-                </div>
-                <Link
-                    href="#"
+            <div
+                class="bg-white rounded-xl shadow-sm px-5 py-3 border border-gray-100 w-fit"
+            >
+                <p class="text-sm text-gray-500">Total Projects</p>
+                <p class="text-2xl font-semibold text-gray-800 text-center">
+                    {{ totalProjects }}
+                </p>
+            </div>
+
+            <div
+                class="flex items-center gap-4 self-stretch sm:self-auto md:justify-end justify-start w-full"
+            >
+                <button
+                    @click="openNewProjectDrawer = true"
                     class="inline-flex items-center justify-center px-4 py-2 bg-amber-500 text-white rounded-lg shadow-sm hover:bg-amber-600 transition duration-150"
                 >
                     <svg
@@ -74,7 +335,7 @@ function showProjectDetails(project) {
                         />
                     </svg>
                     New Project
-                </Link>
+                </button>
             </div>
         </div>
 
@@ -326,7 +587,7 @@ function showProjectDetails(project) {
         </div>
 
         <!-- Pagination -->
-       <nav v-if="projects.data.length > 0" class="mt-10 flex justify-center">
+        <nav v-if="projects.data.length > 0" class="mt-10 flex justify-center">
             <div class="flex items-center space-x-1 text-sm">
                 <template v-for="(link, index) in projects.links" :key="index">
                     <Link

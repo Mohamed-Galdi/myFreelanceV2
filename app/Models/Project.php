@@ -8,7 +8,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use App\Observers\ProjectObserver;
 
-#[ObservedBy(ProjectObserver::class)]
 class Project extends Model
 {
     use HasFactory;

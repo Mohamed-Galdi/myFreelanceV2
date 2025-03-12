@@ -21,9 +21,7 @@ class WorkSeeder extends Seeder
                 'price' => 500.00,
                 'start_date' => Carbon::now()->subDays(60),
                 'end_date' => Carbon::now()->subDays(55),
-                'project_status' => 'ongoing',
                 'payment_status' => 'paid',
-                'payment_method' => 'PayPal'
             ],
             [
                 'project_id' => $projects->where('title', 'E-commerce Platform')->first()->id,
@@ -31,9 +29,7 @@ class WorkSeeder extends Seeder
                 'price' => 800.00,
                 'start_date' => Carbon::now()->subDays(50),
                 'end_date' => Carbon::now()->subDays(45),
-                'project_status' => 'ongoing',
                 'payment_status' => 'paid',
-                'payment_method' => 'Bank Transfer'
             ],
             [
                 'project_id' => $projects->where('title', 'E-commerce Platform')->first()->id,
@@ -41,9 +37,7 @@ class WorkSeeder extends Seeder
                 'price' => 600.00,
                 'start_date' => Carbon::now()->subDays(40),
                 'end_date' => Carbon::now()->subDays(35),
-                'project_status' => 'ongoing',
                 'payment_status' => 'pending',
-                'payment_method' => 'PayPal'
             ],
 
             // Admin Dashboard
@@ -53,9 +47,7 @@ class WorkSeeder extends Seeder
                 'price' => 400.00,
                 'start_date' => Carbon::now()->subDays(30),
                 'end_date' => Carbon::now()->subDays(25),
-                'project_status' => 'ongoing',
                 'payment_status' => 'paid',
-                'payment_method' => 'PayPal'
             ],
 
             // Portfolio Website
@@ -65,9 +57,7 @@ class WorkSeeder extends Seeder
                 'price' => 300.00,
                 'start_date' => Carbon::now()->subDays(20),
                 'end_date' => Carbon::now()->subDays(18),
-                'project_status' => 'completed',
                 'payment_status' => 'paid',
-                'payment_method' => 'Payoneer'
             ],
             [
                 'project_id' => $projects->where('title', 'Portfolio Website')->first()->id,
@@ -75,9 +65,7 @@ class WorkSeeder extends Seeder
                 'price' => 500.00,
                 'start_date' => Carbon::now()->subDays(17),
                 'end_date' => Carbon::now()->subDays(12),
-                'project_status' => 'completed',
                 'payment_status' => 'paid',
-                'payment_method' => 'Payoneer'
             ],
 
             // Inventory Management System
@@ -87,9 +75,7 @@ class WorkSeeder extends Seeder
                 'price' => 600.00,
                 'start_date' => Carbon::now()->subDays(45),
                 'end_date' => Carbon::now()->subDays(40),
-                'project_status' => 'ongoing',
                 'payment_status' => 'paid',
-                'payment_method' => 'Bank Transfer'
             ],
             [
                 'project_id' => $projects->where('title', 'Inventory Management System')->first()->id,
@@ -97,9 +83,7 @@ class WorkSeeder extends Seeder
                 'price' => 500.00,
                 'start_date' => Carbon::now()->subDays(35),
                 'end_date' => Carbon::now()->subDays(30),
-                'project_status' => 'ongoing',
                 'payment_status' => 'pending',
-                'payment_method' => 'Bank Transfer'
             ],
 
             // Order Tracking App
@@ -109,9 +93,7 @@ class WorkSeeder extends Seeder
                 'price' => 400.00,
                 'start_date' => Carbon::now()->subDays(25),
                 'end_date' => Carbon::now()->subDays(20),
-                'project_status' => 'ongoing',
                 'payment_status' => 'paid',
-                'payment_method' => 'PayPal'
             ],
 
             // Email Campaign Manager
@@ -121,9 +103,7 @@ class WorkSeeder extends Seeder
                 'price' => 700.00,
                 'start_date' => Carbon::now()->subDays(15),
                 'end_date' => Carbon::now()->subDays(10),
-                'project_status' => 'ongoing',
                 'payment_status' => 'paid',
-                'payment_method' => 'Wise'
             ],
 
             // Mobile App Landing Page
@@ -133,9 +113,7 @@ class WorkSeeder extends Seeder
                 'price' => 350.00,
                 'start_date' => Carbon::now()->subDays(12),
                 'end_date' => Carbon::now()->subDays(8),
-                'project_status' => 'completed',
                 'payment_status' => 'paid',
-                'payment_method' => 'PayPal'
             ],
 
             // User Authentication System
@@ -145,9 +123,7 @@ class WorkSeeder extends Seeder
                 'price' => 450.00,
                 'start_date' => Carbon::now()->subDays(10),
                 'end_date' => Carbon::now()->subDays(5),
-                'project_status' => 'ongoing',
                 'payment_status' => 'pending',
-                'payment_method' => 'Bank Transfer'
             ],
         ];
 
