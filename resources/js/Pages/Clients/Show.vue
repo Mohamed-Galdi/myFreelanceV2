@@ -8,7 +8,6 @@ import Select from "primevue/select";
 import { useToast } from "primevue/usetoast";
 import Toast from "primevue/toast";
 
-
 const props = defineProps({
     client: Object,
     metrics: Object,
@@ -132,7 +131,7 @@ function updateClient() {
         class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-[calc(100vh-100px)]"
     >
         <Toast position="top-center" />
-         <!-- Edit Client Drawer -->
+        <!-- Edit Client Drawer -->
         <Drawer
             v-model:visible="openEditClientDrawer"
             header="Edit Client"
@@ -180,14 +179,14 @@ function updateClient() {
             </form>
         </Drawer>
         <!-- Back button and header -->
-        <div class="flex items-center mb-6">
+        <div class="mb-6">
             <Link
                 :href="route('clients')"
-                class="flex items-center text-gray-600 hover:text-gray-900"
+                class="inline-flex items-center justify-center p-2 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 transition duration-150"
             >
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    class="h-5 w-5 mr-1"
+                    class="h-5 w-5 text-gray-600"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -196,10 +195,9 @@ function updateClient() {
                         stroke-linecap="round"
                         stroke-linejoin="round"
                         stroke-width="2"
-                        d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                        d="M15 19l-7-7 7-7"
                     />
                 </svg>
-                Back to Clients
             </Link>
         </div>
 
@@ -225,11 +223,6 @@ function updateClient() {
                         class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition duration-150"
                     >
                         Edit Client
-                    </button>
-                    <button
-                        class="px-4 py-2 bg-rose-500 text-white rounded-lg hover:bg-rose-600 transition duration-150"
-                    >
-                        New Project
                     </button>
                 </div>
             </div>
@@ -533,13 +526,13 @@ function updateClient() {
                     class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100 hover:shadow-md transition duration-200"
                 >
                     <div
-                        v-if="project.logo"
+                        v-if="project.image"
                         class="h-40 bg-gray-100 flex items-center justify-center"
                     >
                         <img
-                            :src="project.logo"
+                            :src="`/${project.image}`"
                             :alt="project.title"
-                            class="max-h-full max-w-full object-contain"
+                            class="h-40 object-cover object-top w-full"
                         />
                     </div>
                     <div
@@ -602,11 +595,12 @@ function updateClient() {
                         <div
                             class="mt-5 pt-4 border-t border-gray-100 flex justify-between items-center"
                         >
-                            <button
+                            <Link
+                                :href="route('project', project.id)"
                                 class="text-sm text-rose-600 hover:text-rose-700 font-medium"
                             >
                                 View Details
-                            </button>
+                            </Link>
                             <div class="flex space-x-2">
                                 <a
                                     v-if="project.github_repo"

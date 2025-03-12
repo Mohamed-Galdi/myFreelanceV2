@@ -39,6 +39,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/projects/{project}', [ProjectController::class, 'show'])->name('project');
     Route::post('/projects', [ProjectController::class, 'store'])->name('admin.projects.store');
     Route::post('/projects/{project}', [ProjectController::class, 'update'])->name('admin.projects.update');
+
+    // <------------> TODO: delete related files
     Route::post('/projects/{project}/delete', [ProjectController::class, 'destroy'])->name('admin.projects.delete');
 
     // Work Routes

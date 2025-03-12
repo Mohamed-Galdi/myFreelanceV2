@@ -19,7 +19,6 @@ return new class extends Migration
             $table->string('logo')->nullable();
             $table->string('image')->nullable();
             $table->json('tech_stack')->nullable();
-            $table->enum('status', ['ongoing', 'completed', 'updates' ,'cancelled'])->default('ongoing');
             $table->string('github_repo')->nullable();
             $table->string('live_link')->nullable();
             $table->integer('work_count')->default(0);

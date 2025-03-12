@@ -1,16 +1,65 @@
 <script setup>
 import AppLayout from "@/Layouts/AppLayout.vue";
-import { Link } from "@inertiajs/vue3";
-import { ref } from "vue";
+import { Link, router, useForm } from "@inertiajs/vue3";
+import Drawer from "primevue/drawer";
+import InputText from "primevue/inputtext";
+import Select from "primevue/select";
+import { useToast } from "primevue/usetoast";
+import Toast from "primevue/toast";
+import ConfirmDialog from "primevue/confirmdialog";
+import { useConfirm } from "primevue/useconfirm";
+import { ref, computed } from "vue";
+import FileUpload from "@/Components/FileUpload.vue";
+import MultiSelect from "primevue/multiselect";
 
 const props = defineProps({
     project: Object,
     stats: Object,
+    clients: Array,
 });
 
 defineOptions({
     layout: AppLayout,
 });
+
+const isMobile = computed(() => window.innerWidth <= 768);
+
+const clients = props.clients;
+
+const project = props.project;
+
+const techStacks = [
+    { label: "React", value: "react" },
+    { label: "Vue", value: "vue" },
+    { label: "Laravel", value: "laravel" },
+    { label: "PHP", value: "php" },
+    { label: "JavaScript", value: "javascript" },
+    { label: "Tailwind CSS", value: "tailwindcss" },
+];
+
+// ######################################## file upload
+// logo
+const logoTempFile = ref(null);
+function handleLogoFileUploaded(fileFolder) {
+    logoTempFile.value = fileFolder;
+}
+
+function handleLogoFileReverted() {
+    logoTempFile.value = null;
+}
+
+// image
+const imageTempFile = ref(null);
+function handleImageFileUploaded(fileFolder) {
+    imageTempFile.value = fileFolder;
+}
+
+function handleImageFileReverted() {
+    imageTempFile.value = null;
+}
+
+const toast = useToast();
+const confirm = useConfirm();
 
 // Format currency
 const formatCurrency = (value) => {
@@ -50,42 +99,242 @@ const getStatusColor = (status) => {
             return "bg-gray-100 text-gray-800";
     }
 };
+
+// ######################################## edit project
+const openEditProjectDrawer = ref(false);
+
+const editProjectForm = useForm({
+    id: project.id,
+    clientId: project.client_id,
+    logo: null,
+    image: null,
+    title: project.title,
+    description: project.description ? project.description : null,
+    tech_stack: project.tech_stack ? project.tech_stack : null,
+    github_repo: project.github_repo ? project.github_repo : null,
+    live_link: project.live_link ? project.live_link : null,
+});
+
+const projectLogo = project.logo ?? null;
+const projectImage = project.image ?? null;
+
+function updateProject() {
+    editProjectForm.logo = logoTempFile.value;
+    editProjectForm.image = imageTempFile.value;
+    editProjectForm.post(
+        route("admin.projects.update", { project: editProjectForm.id }),
+        {
+            preserveState: false,
+            onSuccess: () => {
+                toast.add({
+                    severity: "success",
+                    summary: "Succes",
+                    detail: "Project updated successfully",
+                    life: 3000,
+                });
+                editProjectForm.reset();
+                openEditProjectDrawer.value = false;
+            },
+            onError: () => {
+                const errorMessage = Object.values(editProjectForm.errors)[0];
+                toast.add({
+                    severity: "error",
+                    summary: "Erreur",
+                    detail: errorMessage,
+                    life: 3000,
+                });
+            },
+        }
+    );
+}
+
+// ######################################## delete project
+const deleteProject = () => {
+    confirm.require({
+        group: "templating",
+        message: "Are you sure you want to delete this project?",
+        header: "Confirm Deletion",
+        rejectProps: {
+            label: "Cancel",
+            severity: "secondary",
+            outlined: true,
+        },
+        acceptProps: {
+            label: "Delete",
+            severity: "danger",
+        },
+        accept: () => {
+            router.post(
+                route("admin.projects.delete", { project: project.id })
+            );
+            setTimeout(() => {
+                toast.add({
+                    severity: "success",
+                    summary: "Succes",
+                    detail: "Project deleted successfully",
+                    life: 3000,
+                });
+            }, 500);
+        },
+    });
+};
 </script>
 
 <template>
     <div
         class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-[calc(100vh-100px)]"
     >
-        <!-- Header with back button, title and actions -->
-        <div class="flex items-center justify-between mb-8">
-            <div class="flex items-center gap-4">
-                <Link
-                    :href="route('projects')"
-                    class="inline-flex items-center justify-center p-2 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 transition duration-150"
+        <Toast position="top-center" />
+        <!-- Edit Project Drawer -->
+        <Drawer
+            v-model:visible="openEditProjectDrawer"
+            header="Edit Project"
+            :style="{ width: isMobile ? '100%' : '50vw' }"
+            position="right"
+        >
+            <form
+                action=""
+                class="flex flex-col gap-6 py-3"
+                @submit.prevent="updateProject"
+            >
+                <Select
+                    v-model="editProjectForm.clientId"
+                    name="clientId"
+                    :options="clients"
+                    optionLabel="name"
+                    optionValue="id"
+                    placeholder="Project Client"
+                    class="w-full"
+                />
+                <InputText
+                    v-model="editProjectForm.title"
+                    name="title"
+                    type="text"
+                    placeholder="Project Title"
+                    autofocus
+                    class="w-full"
+                />
+                <InputText
+                    v-model="editProjectForm.description"
+                    name="description"
+                    type="text"
+                    placeholder="Project Description"
+                    autofocus
+                    class="w-full"
+                />
+
+                <div>
+                    <p class="ms-1 text-sm text-slate-600">Project Logo</p>
+
+                    <FileUpload
+                        :initial-file="project.logo ? `/${project.logo}` : null"
+                        @file-uploaded="handleLogoFileUploaded"
+                        @file-reverted="handleLogoFileReverted"
+                    />
+                </div>
+                <div>
+                    <p class="ms-1 text-sm text-slate-600">Project Image</p>
+                    <FileUpload
+                        :initial-file=" project.image ? `/${project.image}` : null"
+                        @file-uploaded="handleImageFileUploaded"
+                        @file-reverted="handleImageFileReverted"
+                    />
+                </div>
+                <MultiSelect
+                    v-model="editProjectForm.tech_stack"
+                    :options="techStacks"
+                    optionLabel="label"
+                    optionValue="value"
+                    placeholder="Tech Stack"
+                    class="w-full"
+                />
+                <InputText
+                    v-model="editProjectForm.github_repo"
+                    name="github_repo"
+                    type="text"
+                    placeholder="Project Github Repo"
+                    autofocus
+                    class="w-full"
+                />
+                <InputText
+                    v-model="editProjectForm.live_link"
+                    name="live_link"
+                    type="text"
+                    placeholder="Project Live Link"
+                    autofocus
+                    class="w-full"
+                />
+                <button
+                    class="w-full"
+                    :class="editProjectForm.processing ? 'btn-disabled' : 'btn'"
+                    :disabled="editProjectForm.processing"
                 >
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        class="h-5 w-5 text-gray-600"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M15 19l-7-7 7-7"
-                        />
-                    </svg>
-                </Link>
-                <h1 class="text-3xl font-bold text-gray-800">
-                    {{ project.title }}
-                </h1>
-            </div>
-            <div class="flex items-center gap-3">
-                <Link
-                    :href="route('projects', project.id)"
-                    class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg shadow-sm text-gray-700 hover:bg-gray-50 transition duration-150"
+                    <span v-if="editProjectForm.processing"
+                        >processing...
+                    </span>
+                    <span v-else>Update Project</span>
+                </button>
+            </form>
+        </Drawer>
+
+        <!-- Confirm Dialog -->
+        <ConfirmDialog group="templating" class="w-full md:w-1/2 lg:w-1/3 mx-8">
+            <template #message="slotProps">
+                <div class="flex flex-col items-center justify-center w-full">
+                    <div class="bg-rose-500 rounded-full p-3 mb-4">
+                        <svg
+                            class="h-8 w-8 text-white"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                        </svg>
+                    </div>
+                    <div class="w-full">
+                        <h2
+                            class="text-xl font-bold text-gray-800 mb-4 text-center"
+                        >
+                            Confirm Deletion
+                        </h2>
+                        <p>Are you sure you want to delete this project?</p>
+                    </div>
+                </div>
+            </template>
+        </ConfirmDialog>
+
+        <div class="flex items-center justify-between mb-8">
+            <!-- Back button -->
+            <Link
+                :href="route('projects')"
+                class="inline-flex items-center justify-center p-2 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 transition duration-150"
+            >
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-5 w-5 text-gray-600"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                >
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M15 19l-7-7 7-7"
+                    />
+                </svg>
+            </Link>
+            <!-- Edit / Delete buttons -->
+            <div class="flex items-center gap-2">
+                <!-- Edit button -->
+                <button
+                    @click="openEditProjectDrawer = true"
+                    class="w-full flex items-center justify-center px-4 py-2 bg-white border border-amber-300 text-amber-700 rounded-lg shadow-sm hover:bg-amber-50 transition duration-150"
                 >
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -101,11 +350,12 @@ const getStatusColor = (status) => {
                             d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
                         />
                     </svg>
-                    Edit Project
-                </Link>
-                <Link
-                    :href="route('works', { project_id: project.id })"
-                    class="inline-flex items-center px-4 py-2 bg-amber-500 text-white rounded-lg shadow-sm hover:bg-amber-600 transition duration-150"
+                    <p class="text-nowrap">Edit Project</p>
+                </button>
+                <!-- Delete button -->
+                <button
+                    @click="deleteProject()"
+                    class="w-full flex items-center justify-center px-4 py-2 bg-white border border-red-300 text-red-700 rounded-lg shadow-sm hover:bg-red-50 transition duration-150"
                 >
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -118,11 +368,11 @@ const getStatusColor = (status) => {
                             stroke-linecap="round"
                             stroke-linejoin="round"
                             stroke-width="2"
-                            d="M12 4v16m8-8H4"
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
                         />
                     </svg>
-                    Add Work
-                </Link>
+                    <p class="text-nowrap">Delete Project</p>
+                </button>
             </div>
         </div>
 
@@ -136,9 +386,17 @@ const getStatusColor = (status) => {
                     <div
                         class="flex items-center justify-between p-6 border-b border-gray-100"
                     >
-                        <h2 class="text-xl font-semibold text-gray-800">
-                            Project Details
-                        </h2>
+                        <div class="flex items-center gap-4">
+                            <img
+                                v-if="project.logo"
+                                :src="`/${project.logo}`"
+                                :alt="project.title"
+                                class="w-10 h-10 rounded-full border-slate-300 border-2"
+                            />
+                            <h2 class="text-xl font-semibold text-gray-800">
+                                {{ project.title }}
+                            </h2>
+                        </div>
                         <div class="flex items-center gap-2">
                             <a
                                 v-if="project.github_repo"
@@ -181,80 +439,88 @@ const getStatusColor = (status) => {
                         </div>
                     </div>
 
-                    <div class="p-6">
-                        <!-- Logo -->
+                    <div class="">
                         <div
-                            v-if="project.logo"
-                            class="flex justify-center mb-6"
+                            v-if="project.image"
+                            class="max-h-80 w-full overflow-hidden shadow-md shadow-amber-500/50"
                         >
                             <img
-                                :src="project.logo"
+                                :src="`/${project.image}`"
                                 :alt="project.title"
-                                class="max-h-40 max-w-full object-contain"
+                                class="object-cover object-top w-full"
                             />
                         </div>
-
-                        <!-- Client info -->
-                        <div class="mb-6">
-                            <h3 class="text-sm font-medium text-gray-500 mb-2">
-                                Client
-                            </h3>
-                            <Link
-                                :href="route('clients', project.client.id)"
-                                class="text-lg text-amber-600 hover:text-amber-700 font-medium flex items-center"
-                            >
-                                <span>{{ project.client.name }}</span>
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    class="h-4 w-4 ml-1"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
+                        <div class="p-6 space-y-6">
+                            <!-- Client info -->
+                            <div class="">
+                                <Link
+                                    :href="route('client', project.client.id)"
+                                    class="text-lg text-amber-600 hover:text-amber-700 font-medium flex items-center"
                                 >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                                    />
-                                </svg>
-                            </Link>
-                        </div>
+                                    <h3
+                                        class="text-sm font-medium text-gray-500 me-1"
+                                    >
+                                        Client:
+                                    </h3>
+                                    <span>{{ project.client.name }}</span>
+                                    <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        class="h-4 w-4 ml-1"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                    >
+                                        <path
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            stroke-width="2"
+                                            d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                                        />
+                                    </svg>
+                                </Link>
+                            </div>
 
-                        <!-- Description -->
-                        <div class="mb-6">
-                            <h3 class="text-sm font-medium text-gray-500 mb-2">
-                                Description
-                            </h3>
-                            <p class="text-gray-700 whitespace-pre-line">
-                                {{
-                                    project.description ||
-                                    "No description provided"
-                                }}
-                            </p>
-                        </div>
+                            <!-- Description -->
+                            <div class="">
+                                <h3
+                                    class="text-sm font-medium text-gray-500 mb-2"
+                                >
+                                    Description
+                                </h3>
+                                <p class="text-gray-700 whitespace-pre-line">
+                                    {{
+                                        project.description ||
+                                        "No description provided"
+                                    }}
+                                </p>
+                            </div>
 
-                        <!-- Tech stack -->
-                        <div class="mb-6">
-                            <h3 class="text-sm font-medium text-gray-500 mb-2">
-                                Tech Stack
-                            </h3>
-                            <div class="flex flex-wrap gap-2">
-                                <span
-                                    v-for="(tech, index) in project.tech_stack"
-                                    :key="index"
-                                    class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800"
+                            <!-- Tech stack -->
+                            <div class="">
+                                <h3
+                                    class="text-sm font-medium text-gray-500 mb-2"
                                 >
-                                    {{ tech }}
-                                </span>
-                                <span
-                                    v-if="
-                                        !project.tech_stack ||
-                                        project.tech_stack.length === 0
-                                    "
-                                    class="text-gray-500 italic"
-                                    >No tech stack specified</span
-                                >
+                                    Tech Stack
+                                </h3>
+                                <div class="flex flex-wrap gap-2">
+                                    <span
+                                        v-for="(
+                                            tech, index
+                                        ) in project.tech_stack"
+                                        :key="index"
+                                        class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800"
+                                    >
+                                        {{ tech }}
+                                    </span>
+                                    <span
+                                        v-if="
+                                            !project.tech_stack ||
+                                            project.tech_stack.length === 0
+                                        "
+                                        class="text-gray-500 italic"
+                                        >No tech stack specified</span
+                                    >
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -326,7 +592,7 @@ const getStatusColor = (status) => {
                             <div class="flex items-start justify-between mb-2">
                                 <div>
                                     <div class="flex items-center gap-2 mb-1">
-                                        <span
+                                        <!-- <span
                                             :class="[
                                                 getStatusColor(
                                                     work.project_status
@@ -340,7 +606,7 @@ const getStatusColor = (status) => {
                                                     .toUpperCase() +
                                                 work.project_status.slice(1)
                                             }}
-                                        </span>
+                                        </span> -->
                                         <span
                                             :class="[
                                                 getStatusColor(
@@ -511,82 +777,6 @@ const getStatusColor = (status) => {
                                 </p>
                             </div>
                         </div>
-                    </div>
-                </div>
-
-                <!-- Quick actions card -->
-                <div
-                    class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100"
-                >
-                    <div class="p-6 border-b border-gray-100">
-                        <h2 class="text-xl font-semibold text-gray-800">
-                            Quick Actions
-                        </h2>
-                    </div>
-                    <div class="p-6 space-y-4">
-                        <Link
-                            :href="
-                                route('works', {
-                                    project_id: project.id,
-                                })
-                            "
-                            class="w-full flex items-center justify-center px-4 py-2 bg-amber-500 text-white rounded-lg shadow-sm hover:bg-amber-600 transition duration-150"
-                        >
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                class="h-5 w-5 mr-2"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M12 4v16m8-8H4"
-                                />
-                            </svg>
-                            Add Work Item
-                        </Link>
-                        <Link
-                            :href="route('projects', project.id)"
-                            class="w-full flex items-center justify-center px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg shadow-sm hover:bg-gray-50 transition duration-150"
-                        >
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                class="h-5 w-5 mr-2"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                                />
-                            </svg>
-                            Edit Project
-                        </Link>
-                        <button
-                            class="w-full flex items-center justify-center px-4 py-2 bg-white border border-red-300 text-red-700 rounded-lg shadow-sm hover:bg-red-50 transition duration-150"
-                        >
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                class="h-5 w-5 mr-2"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                />
-                            </svg>
-                            Delete Project
-                        </button>
                     </div>
                 </div>
             </div>
