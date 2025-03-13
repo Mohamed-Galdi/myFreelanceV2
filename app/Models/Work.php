@@ -22,10 +22,6 @@ class Work extends Model
         'payment_method'
     ];
 
-    protected $casts = [
-        'start_date' => 'date',
-        'end_date' => 'date',
-    ];
 
     public function project()
     {

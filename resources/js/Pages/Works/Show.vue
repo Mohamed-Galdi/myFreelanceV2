@@ -1,14 +1,36 @@
 <script setup>
 import AppLayout from "@/Layouts/AppLayout.vue";
-import { Link } from "@inertiajs/vue3";
+import { Link, router, useForm } from "@inertiajs/vue3";
+import Drawer from "primevue/drawer";
+import InputText from "primevue/inputtext";
+import Select from "primevue/select";
+import { useToast } from "primevue/usetoast";
+import Toast from "primevue/toast";
+import ConfirmDialog from "primevue/confirmdialog";
+import { useConfirm } from "primevue/useconfirm";
+import { ref, computed } from "vue";
+import InputNumber from "primevue/inputnumber";
+import DatePicker from "primevue/datepicker";
+import WorkStatus from "@/Components/WorkStatus.vue";
 
 const props = defineProps({
     work: Object,
+    projects: Array,
+    worksOfSameProject: Array,
 });
 
 defineOptions({
     layout: AppLayout,
 });
+
+const isMobile = computed(() => window.innerWidth <= 768);
+
+const toast = useToast();
+const confirm = useConfirm();
+
+const work = props.work;
+
+const projects = props.projects;
 
 // Format currency
 const formatCurrency = (value) => {
@@ -29,26 +51,6 @@ const formatDate = (dateString) => {
     }).format(date);
 };
 
-// Get status color class
-const getStatusColor = (status) => {
-    switch (status) {
-        case "ongoing":
-            return "bg-blue-100 text-blue-800";
-        case "completed":
-            return "bg-green-100 text-green-800";
-        case "cancelled":
-            return "bg-red-100 text-red-800";
-        case "paid":
-            return "bg-emerald-100 text-emerald-800";
-        case "pending":
-            return "bg-amber-100 text-amber-800";
-        case "refunded":
-            return "bg-purple-100 text-purple-800";
-        default:
-            return "bg-gray-100 text-gray-800";
-    }
-};
-
 // Format duration between start and end date
 const formatDuration = () => {
     if (!props.work.start_date || !props.work.end_date) return "N/A";
@@ -60,43 +62,245 @@ const formatDuration = () => {
 
     return diffDays === 1 ? "1 day" : `${diffDays} days`;
 };
+function totalDuration(startDate, endDate) {
+    if (!startDate || !endDate) return "N/A";
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+
+    let years = end.getFullYear() - start.getFullYear();
+    let months = end.getMonth() - start.getMonth();
+    let days = end.getDate() - start.getDate();
+
+    // Adjust for negative days (if end day is before start day)
+    if (days < 0) {
+        months--; // Reduce one month
+        let lastMonth = new Date(end.getFullYear(), end.getMonth(), 0); // Last day of the previous month
+        days += lastMonth.getDate();
+    }
+
+    // Adjust for negative months (if end month is before start month in the same year)
+    if (months < 0) {
+        years--;
+        months += 12;
+    }
+
+    // Formatting the result
+    let result = [];
+    if (years > 0) result.push(`${years} ${years === 1 ? "year" : "years"}`);
+    if (months > 0)
+        result.push(`${months} ${months === 1 ? "month" : "months"}`);
+    if (days > 0) result.push(`${days} ${days === 1 ? "day" : "days"}`);
+
+    return result.length > 0 ? result.join(" and ") : "0 days";
+}
+
+// ######################################## edit work
+const openEditWorkDrawer = ref(false);
+
+const workStatuses = ref(["Ongoing", "Completed", "Cancelled"]);
+
+const editWorkForm = useForm({
+    id: work.id,
+    projectId: work.project_id,
+    description: work.description ? work.description : null,
+    price: work.price ? work.price : null,
+    startDate: work.start_date ? work.start_date : null,
+    endDate: work.end_date ? work.end_date : null,
+    status: work.status,
+});
+
+function updateWork() {
+    editWorkForm.post(route("admin.works.update", { work: editWorkForm.id }), {
+        preserveState: false,
+        onSuccess: () => {
+            toast.add({
+                severity: "success",
+                summary: "Succes",
+                detail: "Work updated successfully",
+                life: 3000,
+            });
+            editWorkForm.reset();
+            openEditWorkDrawer.value = false;
+        },
+        onError: () => {
+            const errorMessage = Object.values(editWorkForm.errors)[0];
+            toast.add({
+                severity: "error",
+                summary: "Erreur",
+                detail: errorMessage,
+                life: 3000,
+            });
+        },
+    });
+}
+
+// ######################################## delete work
+const deleteWork = () => {
+    confirm.require({
+        group: "templating",
+        message: "Are you sure you want to delete this work?",
+        header: "Confirm Deletion",
+        rejectProps: {
+            label: "Cancel",
+            severity: "secondary",
+            outlined: true,
+        },
+        acceptProps: {
+            label: "Delete",
+            severity: "danger",
+        },
+        accept: () => {
+            router.post(route("admin.works.delete", { work: work.id }));
+            setTimeout(() => {
+                toast.add({
+                    severity: "success",
+                    summary: "Succes",
+                    detail: "Work deleted successfully",
+                    life: 3000,
+                });
+            }, 500);
+        },
+    });
+};
 </script>
 
 <template>
     <div
         class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-[calc(100vh-100px)]"
     >
+        <Toast position="top-center" />
+
+        <!-- Edit Work Drawer -->
+        <Drawer
+            v-model:visible="openEditWorkDrawer"
+            header="Edit Work"
+            :style="{ width: isMobile ? '100%' : '50vw' }"
+            position="right"
+        >
+            <form
+                action=""
+                class="flex flex-col gap-6 py-3"
+                @submit.prevent="updateWork"
+            >
+                <Select
+                    v-model="editWorkForm.status"
+                    name="project_id"
+                    :options="workStatuses"
+                    placeholder="Work status"
+                    class="w-full"
+                />
+                <Select
+                    v-model="editWorkForm.projectId"
+                    name="project_id"
+                    :options="projects"
+                    optionLabel="title"
+                    optionValue="id"
+                    placeholder="Project"
+                    class="w-full"
+                />
+                <InputText
+                    v-model="editWorkForm.description"
+                    name="description"
+                    type="text"
+                    placeholder="Work Description"
+                    autofocus
+                    class="w-full"
+                />
+                <InputNumber
+                    v-model="editWorkForm.price"
+                    inputId="currency-us"
+                    mode="currency"
+                    currency="USD"
+                    locale="en-US"
+                    fluid
+                    name="price"
+                    placeholder="Price"
+                    class="w-full"
+                />
+                <DatePicker
+                    v-model="editWorkForm.startDate"
+                    name="startDate"
+                    placeholder="Start Date"
+                    class="w-full"
+                    dateFormat="dd/mm/yy"
+                />
+                <DatePicker
+                    v-model="editWorkForm.endDate"
+                    name="endDate"
+                    placeholder="End Date"
+                    class="w-full"
+                    dateFormat="dd/mm/yy"
+                />
+                <button
+                    class="w-full"
+                    :class="editWorkForm.processing ? 'btn-disabled' : 'btn'"
+                    :disabled="editWorkForm.processing"
+                >
+                    <span v-if="editWorkForm.processing">processing... </span>
+                    <span v-else>Update Work</span>
+                </button>
+            </form>
+        </Drawer>
+
+        <!-- Confirm Dialog -->
+        <ConfirmDialog group="templating" class="w-full md:w-1/2 lg:w-1/3 mx-8">
+            <template #message="slotProps">
+                <div class="flex flex-col items-center justify-center w-full">
+                    <div class="bg-rose-500 rounded-full p-3 mb-4">
+                        <svg
+                            class="h-8 w-8 text-white"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                        </svg>
+                    </div>
+                    <div class="w-full">
+                        <h2
+                            class="text-xl font-bold text-gray-800 mb-4 text-center"
+                        >
+                            Confirm Deletion
+                        </h2>
+                        <p>Are you sure you want to delete this work?</p>
+                    </div>
+                </div>
+            </template>
+        </ConfirmDialog>
+
         <!-- Header with back button and actions -->
         <div class="flex items-center justify-between mb-8">
-            <div class="flex items-center">
-                <Link
-                    :href="route('works')"
-                    class="flex items-center text-gray-600 hover:text-blue-600 mr-4"
+            <!-- Back button -->
+            <Link
+                :href="route('works')"
+                class="inline-flex items-center justify-center p-2 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 transition duration-150"
+            >
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-5 w-5 text-gray-600"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
                 >
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        class="h-5 w-5 mr-1"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M10 19l-7-7m0 0l7-7m-7 7h18"
-                        />
-                    </svg>
-                    Back to Works
-                </Link>
-                <h1 class="text-2xl font-bold text-gray-800 ml-2">
-                    Work Details
-                </h1>
-            </div>
-            <div class="flex space-x-3">
-                <Link
-                    :href="route('works', { work: work.id })"
-                    class="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition duration-150"
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M15 19l-7-7 7-7"
+                    />
+                </svg>
+            </Link>
+            <!-- Edit / Delete buttons -->
+            <div class="flex items-center gap-2">
+                <!-- Edit button -->
+                <button
+                    @click="openEditWorkDrawer = true"
+                    class="w-full flex items-center justify-center px-4 py-2 bg-white border border-amber-300 text-amber-700 rounded-lg shadow-sm hover:bg-amber-50 transition duration-150"
                 >
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -112,11 +316,12 @@ const formatDuration = () => {
                             d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
                         />
                     </svg>
-                    Edit
-                </Link>
+                    <p class="text-nowrap">Edit Work</p>
+                </button>
+                <!-- Delete button -->
                 <button
-                    v-if="work.payment_status === 'pending'"
-                    class="inline-flex items-center px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition duration-150"
+                    @click="deleteWork()"
+                    class="w-full flex items-center justify-center px-4 py-2 bg-white border border-red-300 text-red-700 rounded-lg shadow-sm hover:bg-red-50 transition duration-150"
                 >
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -129,10 +334,10 @@ const formatDuration = () => {
                             stroke-linecap="round"
                             stroke-linejoin="round"
                             stroke-width="2"
-                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
                         />
                     </svg>
-                    Mark as Paid
+                    <p class="text-nowrap">Delete Work</p>
                 </button>
             </div>
         </div>
@@ -152,32 +357,7 @@ const formatDuration = () => {
                             Work Information
                         </h2>
                         <div class="flex items-center space-x-2">
-                            <span
-                                :class="[
-                                    getStatusColor(work.project_status),
-                                    'px-3 py-1 rounded-full text-sm font-medium',
-                                ]"
-                            >
-                                {{
-                                    work.project_status
-                                        .charAt(0)
-                                        .toUpperCase() +
-                                    work.project_status.slice(1)
-                                }}
-                            </span>
-                            <span
-                                :class="[
-                                    getStatusColor(work.payment_status),
-                                    'px-3 py-1 rounded-full text-sm font-medium',
-                                ]"
-                            >
-                                {{
-                                    work.payment_status
-                                        .charAt(0)
-                                        .toUpperCase() +
-                                    work.payment_status.slice(1)
-                                }}
-                            </span>
+                            <WorkStatus :status="work.status" />
                         </div>
                     </div>
                     <div class="p-6">
@@ -187,7 +367,7 @@ const formatDuration = () => {
                             </h3>
                             <div class="flex items-center mt-2">
                                 <Link
-                                    :href="route('projects', work.project.id)"
+                                    :href="route('project', work.project.id)"
                                     class="text-blue-600 hover:text-blue-700 font-medium"
                                 >
                                     {{ work.project.title }}
@@ -195,7 +375,7 @@ const formatDuration = () => {
                                 <span class="mx-2 text-gray-400">•</span>
                                 <Link
                                     :href="
-                                        route('clients', work.project.client.id)
+                                        route('client', work.project.client.id)
                                     "
                                     class="text-gray-600 hover:text-gray-800"
                                 >
@@ -213,116 +393,29 @@ const formatDuration = () => {
                             </p>
                         </div>
 
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
-                            <div>
-                                <h4
-                                    class="text-sm font-medium text-gray-500 mb-2"
-                                >
-                                    Date Information
-                                </h4>
-                                <div class="bg-gray-50 rounded-lg p-4">
-                                    <div class="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <p class="text-xs text-gray-500">
-                                                Start Date
-                                            </p>
-                                            <p
-                                                class="text-sm font-medium text-gray-800"
-                                            >
-                                                {{
-                                                    formatDate(work.start_date)
-                                                }}
-                                            </p>
-                                        </div>
-                                        <div>
-                                            <p class="text-xs text-gray-500">
-                                                End Date
-                                            </p>
-                                            <p
-                                                class="text-sm font-medium text-gray-800"
-                                            >
-                                                {{ formatDate(work.end_date) }}
-                                            </p>
-                                        </div>
-                                        <div class="col-span-2">
-                                            <p class="text-xs text-gray-500">
-                                                Duration
-                                            </p>
-                                            <p
-                                                class="text-sm font-medium text-gray-800"
-                                            >
-                                                {{ formatDuration() }}
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
+                        <div class="grid grid-cols-3 gap-4">
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <p class="text-xs text-gray-500">Start Date</p>
+                                <p class="text-sm font-medium text-gray-800">
+                                    {{ formatDate(work.start_date) }}
+                                </p>
                             </div>
-
-                            <div>
-                                <h4
-                                    class="text-sm font-medium text-gray-500 mb-2"
-                                >
-                                    Payment Information
-                                </h4>
-                                <div class="bg-gray-50 rounded-lg p-4">
-                                    <div class="grid grid-cols-2 gap-4">
-                                        <div class="col-span-2">
-                                            <p class="text-xs text-gray-500">
-                                                Amount
-                                            </p>
-                                            <p
-                                                class="text-lg font-bold"
-                                                :class="
-                                                    work.payment_status ===
-                                                    'paid'
-                                                        ? 'text-emerald-600'
-                                                        : 'text-amber-600'
-                                                "
-                                            >
-                                                {{ formatCurrency(work.price) }}
-                                            </p>
-                                        </div>
-                                        <div>
-                                            <p class="text-xs text-gray-500">
-                                                Status
-                                            </p>
-                                            <p
-                                                class="text-sm font-medium"
-                                                :class="
-                                                    work.payment_status ===
-                                                    'paid'
-                                                        ? 'text-emerald-600'
-                                                        : 'text-amber-600'
-                                                "
-                                            >
-                                                {{
-                                                    work.payment_status
-                                                        .charAt(0)
-                                                        .toUpperCase() +
-                                                    work.payment_status.slice(1)
-                                                }}
-                                            </p>
-                                        </div>
-                                        <div v-if="work.payment_method">
-                                            <p class="text-xs text-gray-500">
-                                                Method
-                                            </p>
-                                            <p
-                                                class="text-sm font-medium text-gray-800"
-                                            >
-                                                {{
-                                                    work.payment_method
-                                                        .replace("_", " ")
-                                                        .charAt(0)
-                                                        .toUpperCase() +
-                                                    work.payment_method
-                                                        .replace("_", " ")
-                                                        .slice(1)
-                                                }}
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <p class="text-xs text-gray-500">End Date</p>
+                                <p class="text-sm font-medium text-gray-800">
+                                    {{ formatDate(work.end_date) }}
+                                </p>
+                            </div>
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <p class="text-xs text-gray-500">Duration</p>
+                                <p class="text-sm font-medium text-gray-800">
+                                    {{
+                                        totalDuration(
+                                            work.start_date,
+                                            work.end_date
+                                        )
+                                    }}
+                                </p>
                             </div>
                         </div>
 
@@ -340,6 +433,19 @@ const formatDuration = () => {
                             </div>
                         </div>
                     </div>
+                </div>
+                <!-- Work card -->
+                <div
+                    class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100"
+                >
+                    <div
+                        class="px-6 py-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center"
+                    >
+                        <h2 class="text-xl font-semibold text-gray-800">
+                            Payments
+                        </h2>
+                    </div>
+                    <div class="h-44"></div>
                 </div>
             </div>
 
@@ -359,9 +465,15 @@ const formatDuration = () => {
                             <h3 class="font-medium text-lg text-gray-800 mb-1">
                                 {{ work.project.title }}
                             </h3>
-                            <p class="text-sm text-gray-600 line-clamp-2">
+                            <p class="text-sm text-gray-600 line-clamp-2 mb-4">
                                 {{ work.project.description }}
                             </p>
+                            <h4 class="text-sm font-medium text-gray-500 mb-2">
+                                Total Works:
+                                <span class="text-gray-800 text-base">{{
+                                    work.project.work_count
+                                }}</span>
+                            </h4>
                         </div>
 
                         <div
@@ -386,12 +498,6 @@ const formatDuration = () => {
                         </div>
 
                         <div class="flex space-x-3 mt-4">
-                            <Link
-                                :href="route('projects', work.project.id)"
-                                class="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition duration-150 text-sm"
-                            >
-                                View Project
-                            </Link>
                             <a
                                 v-if="work.project.github_repo"
                                 :href="work.project.github_repo"
@@ -492,42 +598,118 @@ const formatDuration = () => {
                                 </div>
                             </div>
                         </div>
-
-                        <div class="mt-4">
-                            <Link
-                                :href="route('clients', work.project.client.id)"
-                                class="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition duration-150 text-sm"
-                            >
-                                View Client
-                            </Link>
-                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Related works section -->
-        <div class="mt-8">
-            <Link
-                :href="route('works', { project: work.project.id })"
-                class="flex items-center text-blue-600 hover:text-blue-700 mb-4"
+        <!-- Works Of The Same Project -->
+        <div class="my-6">
+            <p class="text-xl font-bold text-gray-800 mb-4 ms-2">
+                Works Of The Same Project:
+            </p>
+            <!-- Empty state -->
+            <div
+                v-if="worksOfSameProject.length === 0"
+                class="bg-blue-50 rounded-xl p-12 text-center shadow-sm border border-blue-100"
             >
-                <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="h-5 w-5 mr-1"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
+                <div
+                    class="mx-auto flex items-center justify-center h-24 w-24 rounded-full bg-blue-100"
                 >
-                    <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M19 9l-7 7-7-7"
-                    />
-                </svg>
-                View all works for this project
-            </Link>
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        class="h-12 w-12 text-blue-600"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                        />
+                    </svg>
+                </div>
+                <h3 class="mt-6 text-xl font-medium text-gray-900">
+                    This is the only work item for this project
+                </h3>
+            </div>
+
+            <!-- Works grid -->
+            <div
+                v-else
+                class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
+            >
+                <div
+                    v-for="work in worksOfSameProject"
+                    :key="work.id"
+                    class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100 hover:shadow-md transition duration-200"
+                >
+                    <div class="p-5">
+                        <div class="flex items-start justify-between mb-3">
+                            <div>
+                                <h3
+                                    class="text-lg font-medium text-gray-800 line-clamp-1"
+                                >
+                                    {{ formatCurrency(work.price) }}
+                                </h3>
+                            </div>
+                            <WorkStatus :status="work.status" />
+                        </div>
+
+                        <p
+                            class="text-sm text-gray-600 line-clamp-2 my-5 border border-slate-200 rounded-md p-1 shadow-sm"
+                        >
+                            {{ work.description }}
+                        </p>
+
+                        <div class="grid grid-cols-2 gap-4 mb-4">
+                            <div class="bg-gray-50 rounded-lg px-3 py-2">
+                                <p class="text-xs text-gray-500">Start Date</p>
+                                <p class="text-sm font-medium text-gray-800">
+                                    {{ formatDate(work.start_date) }}
+                                </p>
+                            </div>
+                            <div class="bg-gray-50 rounded-lg px-3 py-2">
+                                <p class="text-xs text-gray-500">End Date</p>
+                                <p class="text-sm font-medium text-gray-800">
+                                    {{ formatDate(work.end_date) }}
+                                </p>
+                            </div>
+                            <div
+                                class="bg-gray-50 rounded-lg px-3 col-span-2 py-2 text-center"
+                            >
+                                <p class="text-xs text-gray-500">
+                                    Total Duration
+                                </p>
+                                <p class="text-sm font-medium text-gray-800">
+                                    {{
+                                        totalDuration(
+                                            work.start_date,
+                                            work.end_date
+                                        )
+                                    }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Payment History -->
+                        <div>payments: TODO</div>
+
+                        <div
+                            class="flex items-center justify-between pt-4 border-t border-gray-100"
+                        >
+                            <button
+                                @click="showWorkDetails(work)"
+                                class="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                            >
+                                View Details
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </template>

@@ -46,6 +46,9 @@ Route::middleware('auth')->group(function () {
     // Work Routes
     Route::get('/works', [WorkController::class, 'index'])->name('works');
     Route::get('/works/{work}', [WorkController::class, 'show'])->name('work');
+    Route::post('/works', [WorkController::class, 'store'])->name('admin.works.store');
+    Route::post('/works/{work}', [WorkController::class, 'update'])->name('admin.works.update');
+    Route::post('/works/{work}/delete', [WorkController::class, 'destroy'])->name('admin.works.delete');
 
     // Payment Routes
     Route::get('/payments', [PaymentController::class, 'index'])->name('payments');
