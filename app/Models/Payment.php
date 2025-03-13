@@ -15,10 +15,6 @@ class Payment extends Model
         'note'
     ];
 
-    protected $casts = [
-        'payment_date' => 'date',
-    ];
-
     public function work()
     {
         return $this->belongsTo(Work::class);

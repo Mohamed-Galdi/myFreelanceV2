@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Payment;
 use App\Models\Work;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -122,7 +123,7 @@ class PaymentController extends Controller
         $payment = new Payment();
         $payment->work_id = $request->workId;
         $payment->amount = $request->amount;
-        $payment->payment_date = $request->paymentDate;
+        $payment->payment_date = Carbon::parse($request->paymentDate)->toDateString();
         $payment->payment_method = $request->paymentMethod;
         $payment->note = $request->note;
         $payment->save();
@@ -143,7 +144,7 @@ class PaymentController extends Controller
         $payment = Payment::findOrFail($paymentId);
         $payment->work_id = $request->workId;
         $payment->amount = $request->amount;
-        $payment->payment_date = $request->paymentDate;
+        $payment->payment_date = Carbon::parse($request->paymentDate)->toDateString();
         $payment->payment_method = $request->paymentMethod;
         $payment->note = $request->note;
         $payment->save();

@@ -9,8 +9,6 @@ import InputText from "primevue/inputtext";
 import Select from "primevue/select";
 import { useToast } from "primevue/usetoast";
 import Toast from "primevue/toast";
-import ConfirmDialog from "primevue/confirmdialog";
-import { useConfirm } from "primevue/useconfirm";
 import InputNumber from "primevue/inputnumber";
 import DatePicker from "primevue/datepicker";
 
@@ -32,7 +30,6 @@ const props = defineProps({
 const isMobile = computed(() => window.innerWidth <= 768);
 
 const toast = useToast();
-const confirm = useConfirm();
 
 function formatCurrency(amount) {
     return new Intl.NumberFormat("en-US", {

@@ -58,6 +58,14 @@ const paymentProgress = computed(() => {
 // ######################################## edit payment
 const openEditPaymentDrawer = ref(false);
 
+const paymentMethods = ref([
+    "Western Union",
+    "Bank Transfer",
+    "PayPal",
+    "Cash",
+    "Upwork",
+]);
+
 const editPaymentForm = useForm({
     id: payment.id,
     workId: payment.work_id,
@@ -142,19 +150,22 @@ function deletePayment() {
             >
                 <Select
                     v-model="editPaymentForm.workId"
-                    name="work_id"
+                    name="workId"
                     :options="works"
-                    optionLabel="description"
+                    optionLabel="name"
                     optionValue="id"
                     placeholder="Work"
                     class="w-full"
                 />
-                <InputText
+                 <InputNumber
                     v-model="editPaymentForm.amount"
+                    inputId="currency-us"
+                    mode="currency"
+                    currency="USD"
+                    locale="en-US"
+                    fluid
                     name="amount"
-                    type="text"
                     placeholder="Amount"
-                    autofocus
                     class="w-full"
                 />
                 <DatePicker
@@ -224,7 +235,7 @@ function deletePayment() {
         <div class="flex items-center justify-between mb-8">
             <!-- Back button -->
             <Link
-                :href="route('works')"
+                :href="route('payments')"
                 class="inline-flex items-center justify-center p-2 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 transition duration-150"
             >
                 <svg
