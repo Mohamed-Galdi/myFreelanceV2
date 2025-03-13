@@ -53,6 +53,9 @@ Route::middleware('auth')->group(function () {
     // Payment Routes
     Route::get('/payments', [PaymentController::class, 'index'])->name('payments');
     Route::get('/payments/{payment}', [PaymentController::class, 'show'])->name('payment');
+    Route::post('/payments', [PaymentController::class, 'store'])->name('admin.payments.store');
+    Route::post('/payments/{payment}', [PaymentController::class, 'update'])->name('admin.payments.update');
+    Route::post('/payments/{payment}/delete', [PaymentController::class, 'destroy'])->name('admin.payments.delete');
 
     // Settings Routes
     Route::get('/settings', [SettingsController::class, 'index'])->name('settings');
