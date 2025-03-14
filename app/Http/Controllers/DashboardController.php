@@ -13,20 +13,15 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        // Get summary statistics
-        $totalRevenue = Payment::sum('amount');
-
-        $firstWorkDate = Work::min('start_date');
-        $monthlyAverage = 0;
-
-        if ($firstWorkDate) {
-            $monthsSinceFirst = max(1, Carbon::parse($firstWorkDate)->diffInMonths(Carbon::now()));
-            $monthlyAverage = $totalRevenue / $monthsSinceFirst;
-        }
-
         $clientCount = Client::count();
         $projectCount = Project::count();
         $workCount = Work::count();
+
+        $moneyReceived = Payment::sum('amount');
+        $moneyPending = Work::sum('price') - Payment::sum('amount');
+        $totalEarnings = Work::sum('price');
+
+
 
         // Work status counts
         $workStats = [
@@ -63,11 +58,12 @@ class DashboardController extends Controller
 
         return Inertia::render('Dashboard', [
             'summary' => [
-                'totalRevenue' => $totalRevenue,
-                'monthlyAverage' => $monthlyAverage,
                 'clientCount' => $clientCount,
                 'projectCount' => $projectCount,
                 'workCount' => $workCount,
+                'moneyReceived' => $moneyReceived,
+                'moneyPending' => $moneyPending,
+                'totalEarnings' => $totalEarnings,
             ],
             'workStats' => $workStats,
             'paymentStats' => $paymentStats,
@@ -105,16 +101,20 @@ class DashboardController extends Controller
                 $periodMethod = 'addMonth';
                 break;
             case 'alltime':
-                $oldestWork = Work::orderBy('start_date')->first();
-                $startDate = $oldestWork ? Carbon::parse($oldestWork->start_date) : Carbon::now();
+                $oldestPayment = Payment::orderBy('payment_date')->first();
+                $startDate = $oldestPayment ? Carbon::parse($oldestPayment->payment_date) : Carbon::now();
                 $format = 'Y-m';
                 $periodMethod = 'addMonth';
                 break;
         }
 
-        $works = Work::where('start_date', '>=', $startDate)
-            ->get()
-            ->groupBy(fn($work) => Carbon::parse($work->start_date)->format($format));
+        // Get payments with work and project information
+        $payments = Payment::with(['work.project.client'])
+            ->where('payment_date', '>=', $startDate)
+            ->get();
+
+        // Group payments by period
+        $groupedPayments = $payments->groupBy(fn($payment) => Carbon::parse($payment->payment_date)->format($format));
 
         $currentDate = clone $startDate;
         $endDate = Carbon::now();
@@ -127,15 +127,32 @@ class DashboardController extends Controller
                 default => $currentDate->format('M Y'),
             };
 
-            $periodWorks = $works->get($key, collect([]));
-            $periodRevenue = $periodWorks->where('payment_status', 'paid')->sum('price');
+            $periodPayments = $groupedPayments->get($key, collect([]));
+            $periodRevenue = $periodPayments->sum('amount');
             $cumulativeRevenue += $periodRevenue;
+
+            // Create payment details for the chart
+            $paymentDetails = $periodPayments->map(function ($payment) {
+                return [
+                    'id' => $payment->id,
+                    'amount' => $payment->amount,
+                    'date' => $payment->payment_date,
+                    'workId' => $payment->work_id,
+                    'workDescription' => $payment->work->description,
+                    'workStatus' => $payment->work->status,
+                    'projectId' => $payment->work->project->id,
+                    'projectTitle' => $payment->work->project->title,
+                    'clientId' => $payment->work->project->client->id,
+                    'clientName' => $payment->work->project->client->name
+                ];
+            });
 
             $data[] = [
                 'period' => $label,
                 'revenue' => $periodRevenue,
                 'cumulativeRevenue' => $cumulativeRevenue,
-                'workCount' => $periodWorks->count(),
+                'payments' => $paymentDetails,
+                'paymentCount' => $periodPayments->count(),
             ];
 
             $currentDate->{$periodMethod}();

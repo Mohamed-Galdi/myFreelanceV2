@@ -555,6 +555,16 @@ class GeneralSeeder extends Seeder
             ],
             [
                 'id' => 18,
+                'work_id' => 14,
+                'amount' => '80.00',
+                'payment_date' => '2025-02-27',
+                'payment_method' => 'Western Union',
+                'note' => 'Part 2',
+                'created_at' => '2025-03-14 01:57:29',
+                'updated_at' => '2025-03-14 01:57:29',
+            ],
+            [
+                'id' => 19,
                 'work_id' => 15,
                 'amount' => '436.00',
                 'payment_date' => '2025-03-12',

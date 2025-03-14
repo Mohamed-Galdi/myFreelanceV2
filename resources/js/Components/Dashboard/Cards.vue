@@ -36,14 +36,14 @@ defineProps({
         <!-- Monthly Average -->
         <div class="summary-card rounded-2xl shadow-md transition-all duration-300 hover:shadow-xl bg-gradient-to-br from-sky-50 to-white p-6 border border-sky-200">
             <div class="flex justify-between items-center">
-                <h3 class="text-lg font-semibold text-sky-900">Monthly Average</h3>
+                <h3 class="text-lg font-semibold text-sky-900">Pending Amount</h3>
                 <div class="bg-sky-100 p-3 rounded-xl shadow-inner">
-                    <i class="pi pi-chart-line text-sky-600 text-xl"></i>
+                    <i class="pi pi-clock text-sky-600 text-xl"></i>
                 </div>
             </div>
             <div class="mt-4 text-4xl font-extrabold text-sky-700">
                 ${{
-                    summary.monthlyAverage.toLocaleString(undefined, {
+                    summary.moneyPending.toLocaleString(undefined, {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
                     })
@@ -54,19 +54,25 @@ defineProps({
         <!-- Total Revenue -->
         <div class="summary-card rounded-2xl shadow-md transition-all duration-300 hover:shadow-xl bg-gradient-to-br from-emerald-50 to-white p-6 border border-emerald-200">
             <div class="flex justify-between items-center">
-                <h3 class="text-lg font-semibold text-emerald-900">Total Revenue</h3>
+                <h3 class="text-lg font-semibold text-emerald-900">Revenue</h3>
                 <div class="bg-emerald-100 p-3 rounded-xl shadow-inner">
                     <i class="pi pi-dollar text-emerald-600 text-xl"></i>
                 </div>
             </div>
-            <div class="mt-4 text-4xl font-extrabold text-emerald-700">
+            <p class="mt-4 text-4xl font-extrabold text-emerald-700 flex flex-col">
                 ${{
-                    summary.totalRevenue.toLocaleString(undefined, {
+                    summary.moneyReceived.toLocaleString(undefined, {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
                     })
                 }}
-            </div>
+                <span class="text-xl">(Total: ${{
+                    summary.totalEarnings.toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                    })
+                }})</span>
+            </p>
         </div>
 
     </div>
