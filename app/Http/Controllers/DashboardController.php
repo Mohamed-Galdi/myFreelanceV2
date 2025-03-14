@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Client;
+use App\Models\Payment;
 use App\Models\Project;
 use App\Models\Work;
 use Carbon\Carbon;
@@ -13,7 +14,7 @@ class DashboardController extends Controller
     public function index()
     {
         // Get summary statistics
-        $totalRevenue = Work::where('payment_status', 'paid')->sum('price');
+        $totalRevenue = Payment::sum('amount');
 
         $firstWorkDate = Work::min('start_date');
         $monthlyAverage = 0;
@@ -37,10 +38,10 @@ class DashboardController extends Controller
 
         // Payment status counts
         $paymentStats = [
-            'paid' => Work::where('payment_status', 'paid')->count(),
-            'pending' => Work::where('payment_status', 'pending')->count(),
-            'refunded' => Work::where('payment_status', 'refunded')->count(),
-            'cancelled' => Work::where('payment_status', 'cancelled')->count(),
+            'paid' => 0,
+            'pending' => 0,
+            'refunded' => 0,
+            'cancelled' => 0,
         ];
 
         // Recent projects

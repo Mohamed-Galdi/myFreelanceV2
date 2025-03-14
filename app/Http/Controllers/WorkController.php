@@ -20,8 +20,8 @@ class WorkController extends Controller
         $projects = Project::select('id', 'title')->get()->toArray();
 
         $totalWorks = Work::count();
-        $totalRevenue = Work::where('payment_status', 'paid')->sum('price');
-        $pendingRevenue = Work::where('payment_status', 'pending')->sum('price');
+        $totalRevenue = Work::sum('price');
+        $pendingRevenue = Work::sum('price');
 
         return inertia('Works/Index', [
             'works' => $works,
@@ -66,10 +66,6 @@ class WorkController extends Controller
         $work->end_date = $request->endDate ? Carbon::parse($request->endDate)->toDateString() : null;
         $work->save();
 
-        $project = Project::find($request->projectId);
-        $project->work_count++;
-        $project->save();
-
         return '';
     }
 
@@ -99,9 +95,6 @@ class WorkController extends Controller
     public function destroy($workId)
     {
         $work = Work::findOrFail($workId);
-        $project = $work->project;
-        $project->work_count--;
-        $project->save();
         $work->delete();
 
         return redirect()->route('works');

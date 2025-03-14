@@ -63,9 +63,7 @@ const getInitials = (title) => {
                                 <span
                                     class="text-lg font-bold text-emerald-600"
                                 >
-                                    ${{
-                                        project.total_revenue.toLocaleString()
-                                    }}
+                                    $ XXX
                                 </span>
                             </div>
                             <div class="text-sm text-gray-600">

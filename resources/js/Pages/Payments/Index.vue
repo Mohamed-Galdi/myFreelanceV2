@@ -189,13 +189,6 @@ function goToPayment(payment) {
                     placeholder="Work"
                     class="w-full"
                 />
-                <Select
-                    v-model="newPaymentForm.paymentMethod"
-                    name="paymentMethod"
-                    :options="paymentMethods"
-                    placeholder="Payment Method"
-                    class="w-full"
-                />
                  <InputNumber
                     v-model="newPaymentForm.amount"
                     inputId="currency-us"
@@ -207,6 +200,14 @@ function goToPayment(payment) {
                     placeholder="Amount"
                     class="w-full"
                 />
+                <Select
+                    v-model="newPaymentForm.paymentMethod"
+                    name="paymentMethod"
+                    :options="paymentMethods"
+                    placeholder="Payment Method"
+                    class="w-full"
+                />
+                
                 <DatePicker
                     v-model="newPaymentForm.paymentDate"
                     name="paymentDate"

@@ -94,10 +94,6 @@ class ProjectController extends Controller
         }
         $project->save();
 
-        $client = Client::find($request->clientId);
-        $client->projects_count++;
-        $client->save();
-
         return '';
     }
 
@@ -141,9 +137,6 @@ class ProjectController extends Controller
     public function destroy($projectId)
     {
         $project = Project::findOrFail($projectId);
-        $client = $project->client;
-        $client->projects_count--;
-        $client->save();
         $project->delete();
 
         return redirect()->route('projects');

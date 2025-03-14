@@ -18,8 +18,7 @@ return new class extends Migration
             $table->decimal('price', 10, 2);
             $table->date('start_date')->nullable();
             $table->date('end_date')->nullable();
-            $table->enum('status', ['Ongoing', 'Completed', 'Cancelled'])->default('Ongoing');
-            $table->enum('payment_status', ['partial','paid', 'pending', 'refunded', 'cancelled'])->default('pending');
+            $table->string('status')->default('Ongoing');
             $table->timestamps();
         });
     }

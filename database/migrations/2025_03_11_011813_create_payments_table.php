@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('work_id')->constrained()->onDelete('cascade');
             $table->decimal('amount', 10, 2);
             $table->date('payment_date');
-            $table->string('payment_method')->nullable();
+            $table->string('payment_method');
             $table->text('note')->nullable();
             $table->timestamps();
         });

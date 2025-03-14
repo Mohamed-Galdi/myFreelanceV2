@@ -53,7 +53,7 @@ class PaymentController extends Controller
             ->limit(10)
             ->get();
 
-        $works = Work::select('id', 'description')
+        $works = Work::select('id', 'description', 'project_id')
             ->with('project')
             ->get()
             ->map(function ($work) {

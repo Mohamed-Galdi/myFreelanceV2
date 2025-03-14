@@ -53,6 +53,7 @@ const formatDate = (dateString) => {
 
 function totalDuration(startDate, endDate) {
     if (!startDate || !endDate) return "N/A";
+    if (startDate === endDate) return "1 day";
 
     const start = new Date(startDate);
     const end = new Date(endDate);

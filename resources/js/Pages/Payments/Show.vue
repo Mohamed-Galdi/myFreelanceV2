@@ -1,6 +1,6 @@
 <script setup>
 import AppLayout from "@/Layouts/AppLayout.vue";
-import {ref,  computed } from "vue";
+import { ref, computed } from "vue";
 import { Link, router, useForm } from "@inertiajs/vue3";
 import Drawer from "primevue/drawer";
 import InputText from "primevue/inputtext";
@@ -46,7 +46,6 @@ function formatDate(dateString) {
         day: "numeric",
     });
 }
-
 
 // Calculate payment progress percentage
 const paymentProgress = computed(() => {
@@ -119,7 +118,9 @@ function deletePayment() {
             severity: "danger",
         },
         accept: () => {
-            router.post(route("admin.payments.delete", { payment: payment.id }));
+            router.post(
+                route("admin.payments.delete", { payment: payment.id })
+            );
             setTimeout(() => {
                 toast.add({
                     severity: "success",
@@ -130,7 +131,7 @@ function deletePayment() {
             }, 500);
         },
     });
-};
+}
 </script>
 
 <template>
@@ -157,7 +158,7 @@ function deletePayment() {
                     placeholder="Work"
                     class="w-full"
                 />
-                 <InputNumber
+                <InputNumber
                     v-model="editPaymentForm.amount"
                     inputId="currency-us"
                     mode="currency"
@@ -168,17 +169,18 @@ function deletePayment() {
                     placeholder="Amount"
                     class="w-full"
                 />
-                <DatePicker
-                    v-model="editPaymentForm.paymentDate"
-                    name="paymentDate"
-                    placeholder="Payment Date"
-                    class="w-full"
-                />
+
                 <Select
                     v-model="editPaymentForm.paymentMethod"
                     name="paymentMethod"
                     :options="paymentMethods"
                     placeholder="Payment Method"
+                    class="w-full"
+                />
+                <DatePicker
+                    v-model="editPaymentForm.paymentDate"
+                    name="paymentDate"
+                    placeholder="Payment Date"
                     class="w-full"
                 />
                 <InputText
@@ -323,7 +325,7 @@ function deletePayment() {
                                 Amount
                             </dt>
                             <dd
-                                class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2 font-medium text-green-600"
+                                class="mt-1 text-sm sm:mt-0 sm:col-span-2 font-medium text-green-600"
                             >
                                 {{ formatCurrency(payment.amount) }}
                             </dd>

@@ -11,22 +11,35 @@ class Client extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'contact', 'source', 'projects_count', 'total_revenue'];
+    protected $fillable = ['name', 'contact', 'source'];
 
     public function projects()
     {
         return $this->hasMany(Project::class);
     }
-
-    public function updateRevenue()
+    
+    public function getTotalProjects()
     {
-        $this->total_revenue = $this->projects()->sum('total_revenue');
-        $this->save();
+        return $this->projects()->count();
     }
 
-    public function updateProjectCount()
+    public function getTotalWorks()
     {
-        $this->projects_count = $this->projects()->count();
-        $this->save();
+        return $this->projects()->works()->count();
     }
+
+    public function getTotalPayments()
+    {
+        return $this->projects()->works()->payments()->count();
+    }
+
+    public function getTotalRevenue()
+    {
+        return $this->projects()->works()->payments()->sum('amount');
+    }
+
+    // public function getPendingAmounts(){
+    //     // TODO
+    // }
+
 }

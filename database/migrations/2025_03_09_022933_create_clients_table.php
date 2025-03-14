@@ -16,8 +16,6 @@ return new class extends Migration
             $table->string('name');
             $table->string('contact')->nullable();
             $table->string('source')->nullable();
-            $table->integer('projects_count')->default(0);
-            $table->decimal('total_revenue', 10, 2)->default(0);
             $table->timestamps();
         });
     }

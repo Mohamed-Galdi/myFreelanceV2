@@ -21,8 +21,6 @@ return new class extends Migration
             $table->json('tech_stack')->nullable();
             $table->string('github_repo')->nullable();
             $table->string('live_link')->nullable();
-            $table->integer('work_count')->default(0);
-            $table->decimal('total_revenue', 10, 2)->default(0);
             $table->timestamps();
         });
     }

@@ -14,14 +14,13 @@ class Project extends Model
 
     protected $fillable = [
         'client_id',
-        'logo',
         'title',
         'description',
+        'logo',
+        'image',
         'tech_stack',
         'github_repo',
         'live_link',
-        'work_count',
-        'total_revenue'
     ];
 
     protected $casts = [
@@ -38,17 +37,19 @@ class Project extends Model
         return $this->hasMany(Work::class);
     }
 
-    public function updateRevenue()
+    public function getTotalWorks()
     {
-        $this->total_revenue = $this->works()->where('payment_status', 'paid')->sum('price');
-        $this->save();
-
-        $this->client->updateRevenue();
+        return $this->works()->count();
     }
 
-    public function updateWorkCount()
+    public function getTotalPayments()
     {
-        $this->work_count = $this->works()->count();
-        $this->save();
+        return $this->works()->payments()->count();
     }
+
+    public function getTotalRevenue()
+    {
+        return $this->works()->payments()->sum('amount');
+    }
+
 }

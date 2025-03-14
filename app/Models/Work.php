@@ -17,9 +17,7 @@ class Work extends Model
         'price',
         'start_date',
         'end_date',
-        'project_status',
-        'payment_status',
-        'payment_method'
+        'status'
     ];
 
 
@@ -33,16 +31,24 @@ class Work extends Model
         return $this->hasMany(Payment::class);
     }
 
-    protected static function booted()
+    public function getTotalPayments()
     {
-        static::saved(function ($work) {
-            $work->project->updateRevenue();
-            $work->project->updateWorkCount();
-        });
-
-        static::deleted(function ($work) {
-            $work->project->updateRevenue();
-            $work->project->updateWorkCount();
-        });
+        return $this->payments()->count();
     }
+
+    public function getReceivedAmount()
+    {
+        return $this->payments()->sum('amount');
+    }
+
+    public function getRemainingAmount()
+    {
+        return $this->price - $this->getReceivedAmount();
+    }
+
+    public function getPaymentPercentage()
+    {
+        return $this->getReceivedAmount() / $this->price * 100;
+    }
+
 }
