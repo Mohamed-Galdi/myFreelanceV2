@@ -26,7 +26,9 @@ class DashboardController extends Controller
             return [
                 'id' => $work->id,
                 'client' => $work->project->client->name,
+                'client_id' => $work->project->client->id,
                 'project' => $work->project->title,
+                'project_id' => $work->project->id,
                 'logo' => $work->project->logo,
                 'title' => $work->description,
                 'price' => $work->price,

@@ -84,7 +84,7 @@ const formatDate = (dateString) => {
             <div
                 v-for="work in recentWorks"
                 :key="work.id"
-                class="m-4 p-4 rounded-md shadow-sm hover:shadow-md hover:scale-[1.001] hover:border-blue-300 border border-slate-300 bg-white transition-all duration-300 ease-in-out"
+                class="m-4 p-4 rounded-md shadow-sm hover:shadow-md hover:border-blue-300 border border-slate-300 bg-white transition-all duration-300 ease-in-out"
             >
                 <!-- Top section: Title, Status, Client, Project -->
                 <div class="flex items-center justify-between mb-4">
@@ -118,13 +118,16 @@ const formatDate = (dateString) => {
                                 class="flex items-center text-sm text-gray-500 mt-0.5 gap-2"
                             >
                                 <Link
-                                    :href="route('project', 1)"
+                                    :href="route('project', work.project_id)"
                                     class="hover:text-blue-600 transition-colors"
                                 >
                                     {{ work.project }}
                                 </Link>
-                                <span class="text-gray-300">•</span>
-                                <span>{{ work.client }}</span>
+                                <span class="text-gray-300">••</span>
+
+                                <Link :href="route('client', work.client_id)" class="hover:text-blue-600 transition-colors">
+                                    {{ work.client }}
+                                </Link>
                             </div>
                         </div>
                     </div>
