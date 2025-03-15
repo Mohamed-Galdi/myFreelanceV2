@@ -28,42 +28,39 @@ const getProgressBarColor = (percentage) => {
     return "bg-green-500";
 };
 
-const totalDuration = (startDate, endDate) => {
+function totalDuration(startDate, endDate) {
     if (!startDate || !endDate) return "N/A";
+    if (startDate === endDate) return "1 day";
+
     const start = new Date(startDate);
     const end = new Date(endDate);
+
     let years = end.getFullYear() - start.getFullYear();
     let months = end.getMonth() - start.getMonth();
     let days = end.getDate() - start.getDate();
 
+    // Adjust for negative days (if end day is before start day)
     if (days < 0) {
-        months--;
-        let lastMonth = new Date(end.getFullYear(), end.getMonth(), 0);
+        months--; // Reduce one month
+        let lastMonth = new Date(end.getFullYear(), end.getMonth(), 0); // Last day of the previous month
         days += lastMonth.getDate();
     }
 
+    // Adjust for negative months (if end month is before start month in the same year)
     if (months < 0) {
         years--;
         months += 12;
     }
 
+    // Formatting the result
     let result = [];
     if (years > 0) result.push(`${years} ${years === 1 ? "year" : "years"}`);
     if (months > 0)
         result.push(`${months} ${months === 1 ? "month" : "months"}`);
     if (days > 0) result.push(`${days} ${days === 1 ? "day" : "days"}`);
-    return result.length > 0 ? result.join(" and ") : "0 days";
-};
 
-const formatDate = (dateString) => {
-    if (!dateString) return "—";
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-    });
-};
+    return result.length > 0 ? result.join(" and ") : "0 days";
+}
 </script>
 
 <template>

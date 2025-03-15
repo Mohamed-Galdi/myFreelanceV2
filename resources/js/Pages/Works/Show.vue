@@ -62,8 +62,11 @@ const formatDuration = () => {
 
     return diffDays === 1 ? "1 day" : `${diffDays} days`;
 };
+
 function totalDuration(startDate, endDate) {
     if (!startDate || !endDate) return "N/A";
+    if (startDate === endDate) return "1 day";
+
     const start = new Date(startDate);
     const end = new Date(endDate);
 

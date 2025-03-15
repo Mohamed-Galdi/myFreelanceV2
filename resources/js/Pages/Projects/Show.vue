@@ -11,10 +11,10 @@ import { useConfirm } from "primevue/useconfirm";
 import { ref, computed } from "vue";
 import FileUpload from "@/Components/FileUpload.vue";
 import MultiSelect from "primevue/multiselect";
+import WorkStatus from "@/Components/WorkStatus.vue";
 
 const props = defineProps({
     project: Object,
-    stats: Object,
     clients: Array,
 });
 
@@ -81,24 +81,39 @@ const formatDate = (dateString) => {
 };
 
 // Get status color class
-const getStatusColor = (status) => {
-    switch (status) {
-        case "ongoing":
-            return "bg-blue-100 text-blue-800";
-        case "completed":
-            return "bg-green-100 text-green-800";
-        case "cancelled":
-            return "bg-red-100 text-red-800";
-        case "paid":
-            return "bg-emerald-100 text-emerald-800";
-        case "pending":
-            return "bg-amber-100 text-amber-800";
-        case "refunded":
-            return "bg-purple-100 text-purple-800";
-        default:
-            return "bg-gray-100 text-gray-800";
+function totalDuration(startDate, endDate) {
+    if (!startDate || !endDate) return "N/A";
+    if (startDate === endDate) return "1 day";
+
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+
+    let years = end.getFullYear() - start.getFullYear();
+    let months = end.getMonth() - start.getMonth();
+    let days = end.getDate() - start.getDate();
+
+    // Adjust for negative days (if end day is before start day)
+    if (days < 0) {
+        months--; // Reduce one month
+        let lastMonth = new Date(end.getFullYear(), end.getMonth(), 0); // Last day of the previous month
+        days += lastMonth.getDate();
     }
-};
+
+    // Adjust for negative months (if end month is before start month in the same year)
+    if (months < 0) {
+        years--;
+        months += 12;
+    }
+
+    // Formatting the result
+    let result = [];
+    if (years > 0) result.push(`${years} ${years === 1 ? "year" : "years"}`);
+    if (months > 0)
+        result.push(`${months} ${months === 1 ? "month" : "months"}`);
+    if (days > 0) result.push(`${days} ${days === 1 ? "day" : "days"}`);
+
+    return result.length > 0 ? result.join(" and ") : "0 days";
+}
 
 // ######################################## edit project
 const openEditProjectDrawer = ref(false);
@@ -235,7 +250,9 @@ const deleteProject = () => {
                 <div>
                     <p class="ms-1 text-sm text-slate-600">Project Image</p>
                     <FileUpload
-                        :initial-file=" project.image ? `/${project.image}` : null"
+                        :initial-file="
+                            project.image ? `/${project.image}` : null
+                        "
                         @file-uploaded="handleImageFileUploaded"
                         @file-reverted="handleImageFileReverted"
                     />
@@ -308,6 +325,7 @@ const deleteProject = () => {
             </template>
         </ConfirmDialog>
 
+        <!-- top buttons -->
         <div class="flex items-center justify-between mb-8">
             <!-- Back button -->
             <Link
@@ -377,26 +395,54 @@ const deleteProject = () => {
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <!-- Project details section -->
-            <div class="lg:col-span-2 space-y-8">
-                <!-- Project info card -->
+            <!-- Project info card -->
+            <div
+                class="lg:col-span-2 bg-slate-50 rounded-xl shadow-sm overflow-hidden border border-slate-200"
+            >
+                <!-- Image -->
+                <div v-if="project.image" class="shrink-0 overflow-hidden">
+                    <img
+                        :src="`/${project.image}`"
+                        :alt="project.title"
+                        class="project-image w-full h-[250px] object-cover object-top"
+                    />
+                </div>
                 <div
-                    class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100"
+                    v-else
+                    class="h-[250px] bg-white items-center justify-center flex flex-col"
                 >
-                    <div
-                        class="flex items-center justify-between p-6 border-b border-gray-100"
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        class="h-16 w-16 text-gray-300"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
                     >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                        />
+                    </svg>
+                    <small class="text-sm text-slate-400">No image</small>
+                </div>
+
+                <div class="p-6 space-y-6">
+                   <div class="flex justify-between">
+                        <!-- Logo and title -->
                         <div class="flex items-center gap-4">
                             <img
                                 v-if="project.logo"
                                 :src="`/${project.logo}`"
                                 :alt="project.title"
-                                class="w-10 h-10 rounded-full border-slate-300 border-2"
+                                class="w-10 h-10 rounded-full border-slate-300 border-2 bg-white"
                             />
                             <h2 class="text-xl font-semibold text-gray-800">
                                 {{ project.title }}
                             </h2>
                         </div>
+                        <!-- Links -->
                         <div class="flex items-center gap-2">
                             <a
                                 v-if="project.github_repo"
@@ -437,91 +483,89 @@ const deleteProject = () => {
                                 </svg>
                             </a>
                         </div>
+                   </div>
+                    <!-- Client info -->
+                    <div class="">
+                        <Link
+                            :href="route('client', project.client.id)"
+                            class="text-lg text-amber-600 hover:text-amber-700 font-medium flex items-center"
+                        >
+                            <h3 class="text-sm font-medium text-gray-500 me-1">
+                                Client:
+                            </h3>
+                            <span>{{ project.client.name }}</span>
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                class="h-4 w-4 ml-1"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                                />
+                            </svg>
+                        </Link>
                     </div>
 
+                    <!-- Description -->
                     <div class="">
-                        <div
-                            v-if="project.image"
-                            class="max-h-80 w-full overflow-hidden shadow-md shadow-amber-500/50"
-                        >
-                            <img
-                                :src="`/${project.image}`"
-                                :alt="project.title"
-                                class="object-cover object-top w-full"
-                            />
+                        <h3 class="text-sm font-medium text-gray-500 mb-2">
+                            Description
+                        </h3>
+                        <p class="text-gray-700 whitespace-pre-line">
+                            {{
+                                project.description || "No description provided"
+                            }}
+                        </p>
+                    </div>
+
+                    <!-- Tech stack -->
+                    <div class="">
+                        <h3 class="text-sm font-medium text-gray-500 mb-2">
+                            Tech Stack
+                        </h3>
+                        <div class="flex flex-wrap gap-2">
+                            <span
+                                v-for="(tech, index) in project.tech_stack"
+                                :key="index"
+                                class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-white text-gray-800 border border-blue-900"
+                            >
+                                {{ tech }}
+                            </span>
+                            <span
+                                v-if="
+                                    !project.tech_stack ||
+                                    project.tech_stack.length === 0
+                                "
+                                class="text-gray-500 italic"
+                                >No tech stack specified</span
+                            >
                         </div>
-                        <div class="p-6 space-y-6">
-                            <!-- Client info -->
-                            <div class="">
-                                <Link
-                                    :href="route('client', project.client.id)"
-                                    class="text-lg text-amber-600 hover:text-amber-700 font-medium flex items-center"
-                                >
-                                    <h3
-                                        class="text-sm font-medium text-gray-500 me-1"
-                                    >
-                                        Client:
-                                    </h3>
-                                    <span>{{ project.client.name }}</span>
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        class="h-4 w-4 ml-1"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                        stroke="currentColor"
-                                    >
-                                        <path
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                            stroke-width="2"
-                                            d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                                        />
-                                    </svg>
-                                </Link>
-                            </div>
+                    </div>
+                </div>
+            </div>
 
-                            <!-- Description -->
-                            <div class="">
-                                <h3
-                                    class="text-sm font-medium text-gray-500 mb-2"
-                                >
-                                    Description
-                                </h3>
-                                <p class="text-gray-700 whitespace-pre-line">
-                                    {{
-                                        project.description ||
-                                        "No description provided"
-                                    }}
-                                </p>
-                            </div>
-
-                            <!-- Tech stack -->
-                            <div class="">
-                                <h3
-                                    class="text-sm font-medium text-gray-500 mb-2"
-                                >
-                                    Tech Stack
-                                </h3>
-                                <div class="flex flex-wrap gap-2">
-                                    <span
-                                        v-for="(
-                                            tech, index
-                                        ) in project.tech_stack"
-                                        :key="index"
-                                        class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800"
-                                    >
-                                        {{ tech }}
-                                    </span>
-                                    <span
-                                        v-if="
-                                            !project.tech_stack ||
-                                            project.tech_stack.length === 0
-                                        "
-                                        class="text-gray-500 italic"
-                                        >No tech stack specified</span
-                                    >
-                                </div>
-                            </div>
+            <!-- Stats sidebar -->
+            <div class="space-y-8">
+                <!-- Revenue card -->
+                <div
+                    class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100"
+                >
+                    <div class="p-6 bg-teal-50 border-b border-teal-100">
+                        <h2 class="text-xl font-semibold text-teal-800">
+                            Project Revenue
+                        </h2>
+                    </div>
+                    <div class="p-6">
+                        <div class="text-center">
+                            <p class="text-3xl font-bold text-emerald-600 mb-2">
+                                {{ formatCurrency(project.total_revenue) }}
+                            </p>
+                            <p class="text-gray-500">Total Revenue</p>
                         </div>
                     </div>
                 </div>
@@ -530,7 +574,7 @@ const deleteProject = () => {
                 <div
                     class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100"
                 >
-                    <div class="p-6 border-b border-gray-100">
+                    <div class="p-6 border-b border-gray-100 bg-blue-100">
                         <h2 class="text-xl font-semibold text-gray-800">
                             Work Items
                         </h2>
@@ -557,30 +601,6 @@ const deleteProject = () => {
                         <p class="mt-4 text-gray-600">
                             No work items found for this project
                         </p>
-                        <Link
-                            :href="
-                                route('works', {
-                                    project_id: project.id,
-                                })
-                            "
-                            class="mt-4 inline-flex items-center px-4 py-2 bg-amber-500 text-white rounded-lg shadow-sm hover:bg-amber-600 transition duration-150"
-                        >
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                class="h-5 w-5 mr-2"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M12 4v16m8-8H4"
-                                />
-                            </svg>
-                            Add First Work Item
-                        </Link>
                     </div>
 
                     <div v-else class="divide-y divide-gray-100">
@@ -589,69 +609,16 @@ const deleteProject = () => {
                             :key="work.id"
                             class="p-6 hover:bg-gray-50 transition duration-150"
                         >
-                            <div class="flex items-start justify-between mb-2">
-                                <div>
-                                    <div class="flex items-center gap-2 mb-1">
-                                        <!-- <span
-                                            :class="[
-                                                getStatusColor(
-                                                    work.project_status
-                                                ),
-                                                'px-2.5 py-0.5 rounded-full text-xs font-medium',
-                                            ]"
-                                        >
-                                            {{
-                                                work.project_status
-                                                    .charAt(0)
-                                                    .toUpperCase() +
-                                                work.project_status.slice(1)
-                                            }}
-                                        </span> -->
-                                        <span
-                                            :class="[
-                                                getStatusColor(
-                                                    work.payment_status
-                                                ),
-                                                'px-2.5 py-0.5 rounded-full text-xs font-medium',
-                                            ]"
-                                        >
-                                            {{
-                                                work.payment_status
-                                                    .charAt(0)
-                                                    .toUpperCase() +
-                                                work.payment_status.slice(1)
-                                            }}
-                                        </span>
-                                    </div>
-                                    <p
-                                        class="text-lg font-medium text-gray-800"
-                                    >
-                                        {{ formatCurrency(work.price) }}
-                                    </p>
-                                </div>
-                                <Link
-                                    :href="route('works', work.id)"
-                                    class="p-1 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition duration-150"
-                                >
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        class="h-5 w-5"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                        stroke="currentColor"
-                                    >
-                                        <path
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                            stroke-width="2"
-                                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                                        />
-                                    </svg>
+                            <div class="flex items-start justify-between">
+                                <Link :href="route('work', work.id)" class="text-blue-700 mb-3">
+                                    {{ work.description }}
                                 </Link>
+                                <WorkStatus :status="work.status" />
                             </div>
-                            <p class="text-gray-700 mb-3">
-                                {{ work.description }}
+                            <p class="text-lg font-medium text-gray-800">
+                                {{ formatCurrency(work.price) }}
                             </p>
+
                             <div
                                 class="flex items-center gap-4 text-sm text-gray-500"
                             >
@@ -674,107 +641,15 @@ const deleteProject = () => {
                                         />
                                     </svg>
                                     {{ formatDate(work.start_date) }} -
-                                    {{ formatDate(work.end_date) }}
-                                </span>
-                                <span
-                                    v-if="work.payment_method"
-                                    class="flex items-center"
-                                >
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        class="h-4 w-4 mr-1"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                        stroke="currentColor"
-                                    >
-                                        <path
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                            stroke-width="2"
-                                            d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
-                                        />
-                                    </svg>
+                                    {{ formatDate(work.end_date) }} (
                                     {{
-                                        work.payment_method
-                                            .replace("_", " ")
-                                            .charAt(0)
-                                            .toUpperCase() +
-                                        work.payment_method
-                                            .replace("_", " ")
-                                            .slice(1)
+                                        totalDuration(
+                                            work.start_date,
+                                            work.end_date
+                                        )
                                     }}
+                                    )
                                 </span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Stats sidebar -->
-            <div class="space-y-8">
-                <!-- Revenue card -->
-                <div
-                    class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100"
-                >
-                    <div class="p-6 bg-teal-50 border-b border-teal-100">
-                        <h2 class="text-xl font-semibold text-teal-800">
-                            Project Revenue
-                        </h2>
-                    </div>
-                    <div class="p-6">
-                        <div class="text-center">
-                            <p class="text-3xl font-bold text-emerald-600 mb-2">
-                                {{ formatCurrency(project.total_revenue) }}
-                            </p>
-                            <p class="text-gray-500">Total Revenue</p>
-                        </div>
-                        <div class="mt-6 bg-gray-50 rounded-lg p-4">
-                            <div class="flex justify-between items-center mb-2">
-                                <p class="text-gray-600">Pending Payments</p>
-                                <p class="font-medium text-amber-600">
-                                    {{ formatCurrency(stats.pendingPayments) }}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Work stats card -->
-                <div
-                    class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100"
-                >
-                    <div class="p-6  bg-sky-50 border-b border-sky-100">
-                        <h2 class="text-xl font-semibold text-sky-800">
-                            Work Stats
-                        </h2>
-                    </div>
-                    <div class="p-6">
-                        <div class="grid grid-cols-2 gap-4">
-                            <div class="bg-gray-50 rounded-lg p-4 text-center">
-                                <p class="text-2xl font-bold text-blue-600">
-                                    {{ stats.ongoingWorks }}
-                                </p>
-                                <p class="text-gray-500 text-sm mt-1">
-                                    Ongoing
-                                </p>
-                            </div>
-                            <div class="bg-gray-50 rounded-lg p-4 text-center">
-                                <p class="text-2xl font-bold text-green-600">
-                                    {{ stats.completedWorks }}
-                                </p>
-                                <p class="text-gray-500 text-sm mt-1">
-                                    Completed
-                                </p>
-                            </div>
-                            <div
-                                class="col-span-2 bg-gray-50 rounded-lg p-4 text-center"
-                            >
-                                <p class="text-2xl font-bold text-gray-700">
-                                    {{ project.work_count }}
-                                </p>
-                                <p class="text-gray-500 text-sm mt-1">
-                                    Total Work Items
-                                </p>
                             </div>
                         </div>
                     </div>

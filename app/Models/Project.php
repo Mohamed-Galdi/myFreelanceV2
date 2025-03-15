@@ -46,7 +46,7 @@ class Project extends Model
     {
         return Payment::whereHas('work', function ($query) {
             $query->where('project_id', $this->id);
-        })->count();
+        })->sum('amount');
     }
 
     public function getTotalRevenue()

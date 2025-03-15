@@ -419,7 +419,7 @@ const deleteProject = (projectId) => {
             <template #message="slotProps">
                 <div class="flex flex-col items-center justify-center w-full">
                     <div class="bg-rose-500 rounded-full p-3 mb-4">
-                         <svg
+                        <svg
                             class="h-8 w-8 text-white"
                             fill="none"
                             viewBox="0 0 24 24"
@@ -451,7 +451,7 @@ const deleteProject = (projectId) => {
         >
             <div class="w-full">
                 <h1 class="text-3xl font-bold text-gray-800">Projects</h1>
-                <p class="text-gray-500 mt-1">Manage clients projects</p>
+                <p class="text-gray-500 mt-1">Manage client's projects</p>
             </div>
 
             <div
@@ -549,18 +549,8 @@ const deleteProject = (projectId) => {
             <div
                 v-for="project in projects.data"
                 :key="project.id"
-                class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100 hover:shadow-md transition duration-200"
+                class="bg-slate-100 rounded-xl shadow-sm overflow-hidden border border-slate-200 hover:shadow-md transition duration-200"
             >
-                <!-- <div
-                    
-                    class="h-40 bg-gray-50 flex items-center justify-center"
-                >
-                    <img
-                        :src="project.image"
-                        :alt="project.title"
-                        class="object-cover max-h-full "
-                    />
-                </div> -->
                 <div v-if="project.image" class="h-40 shrink-0 overflow-hidden">
                     <img
                         :src="project.image"
@@ -570,7 +560,7 @@ const deleteProject = (projectId) => {
                 </div>
                 <div
                     v-else
-                    class="h-40 bg-gray-50 items-center justify-center flex flex-col"
+                    class="h-40 bg-white items-center justify-center flex flex-col"
                 >
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -591,11 +581,20 @@ const deleteProject = (projectId) => {
 
                 <div class="p-5">
                     <div class="flex items-start justify-between mb-2">
-                        <h3
-                            class="text-lg font-medium text-gray-800 line-clamp-1"
-                        >
-                            {{ project.title }}
-                        </h3>
+                        <div class="flex items-center gap-2 h-10">
+                            <div v-if="project.logo" class="">
+                                <img
+                                    :src="project.logo"
+                                    :alt="project.title"
+                                    class="w-10 h-10 rounded-full border-slate-300 border-2 bg-white"
+                                />
+                            </div>
+                            <h3
+                                class="text-lg font-medium text-gray-800 line-clamp-1"
+                            >
+                                {{ project.title }}
+                            </h3>
+                        </div>
                         <div class="flex space-x-2">
                             <a
                                 v-if="project.github_repo"
@@ -636,32 +635,6 @@ const deleteProject = (projectId) => {
                                 </svg>
                             </a>
                         </div>
-                        <div v-if="project.logo">
-                            <img
-                                :src="project.logo"
-                                :alt="project.title"
-                                class="w-10 h-10 rounded-full border-slate-300 border-2"
-                            />
-                        </div>
-                        <div
-                            v-else
-                            class="h-8 w-8 flex items-center justify-center rounded-full bg-amber-50 text-amber-600 ml-2 flex-shrink-0"
-                        >
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                class="h-5 w-5"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
-                                />
-                            </svg>
-                        </div>
                     </div>
 
                     <div class="mb-1">
@@ -685,29 +658,29 @@ const deleteProject = (projectId) => {
                         <span
                             v-for="(tech, index) in project.tech_stack"
                             :key="index"
-                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800"
+                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-white text-gray-800 border border-blue-900"
                         >
                             {{ tech }}
                         </span>
                     </div>
 
                     <div class="grid grid-cols-2 gap-4 mb-4">
-                        <div class="bg-gray-50 rounded-lg px-3 py-2">
+                        <div class="bg-white rounded-lg px-3 py-2">
                             <p class="text-xs text-gray-500">Works</p>
                             <p class="text-base font-medium text-gray-800">
-                                {{ project.work_count }}
+                                {{ project.total_works }}
                             </p>
                         </div>
-                        <div class="bg-gray-50 rounded-lg px-3 py-2">
+                        <div class="bg-white rounded-lg px-3 py-2">
                             <p class="text-xs text-gray-500">Revenue</p>
                             <p class="text-base font-medium text-emerald-600">
-                                {{ formatCurrency(project.total_revenue) }}
+                                {{ formatCurrency(project.total_payments) }}
                             </p>
                         </div>
                     </div>
 
                     <div
-                        class="flex items-center justify-between pt-4 border-t border-gray-100"
+                        class="flex items-center justify-between pt-4 border-t border-slate-300"
                     >
                         <button
                             @click="showProjectDetails(project)"

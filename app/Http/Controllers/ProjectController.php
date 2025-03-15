@@ -16,8 +16,15 @@ class ProjectController extends Controller
         })
             ->with('client')
             ->orderBy('created_at', 'desc')
-            ->paginate(6)
-            ->withQueryString();
+            ->paginate(9)
+            ->withQueryString()
+            ->through(function ($project) {
+                return [
+                    ...$project->toArray(),
+                    'total_works' => $project->getTotalWorks(),
+                    'total_payments' => $project->getTotalPayments(),
+                ];
+            });
 
         $totalProjects = Project::count();
 
@@ -40,23 +47,13 @@ class ProjectController extends Controller
             $query->orderBy('created_at', 'desc');
         }]);
 
-        // Calculate some additional stats
-        $ongoingWorks = $project->works->where('project_status', 'ongoing')->count();
-        $completedWorks = $project->works->where('project_status', 'completed')->count();
-        $pendingPayments = $project->works->where('payment_status', 'pending')->sum('price');
+        $project->total_revenue = $project->getTotalRevenue();
 
         $clients = Client::select('id', 'name')->get()->toArray();
-
 
         return inertia('Projects/Show', [
             'project' => $project,
             'clients' => $clients,
-            'stats' => [
-                'ongoingWorks' => $ongoingWorks,
-                'completedWorks' => $completedWorks,
-                'pendingPayments' => $pendingPayments
-            ],
-            
         ]);
     }
 
