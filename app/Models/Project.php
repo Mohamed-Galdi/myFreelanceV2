@@ -44,12 +44,16 @@ class Project extends Model
 
     public function getTotalPayments()
     {
-        return $this->works()->payments()->count();
+        return Payment::whereHas('work', function ($query) {
+            $query->where('project_id', $this->id);
+        })->count();
     }
 
     public function getTotalRevenue()
     {
-        return $this->works()->payments()->sum('amount');
+        return Payment::whereHas('work', function ($query) {
+            $query->where('project_id', $this->id);
+        })->sum('amount');
     }
 
 }

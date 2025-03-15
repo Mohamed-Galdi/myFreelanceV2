@@ -208,11 +208,6 @@ const chartOptions = {
         },
     },
 };
-
-onMounted(() => {
-    // Register custom plugin
-    Chart.register(paymentDetailsPlugin);
-});
 </script>
 
 <template>

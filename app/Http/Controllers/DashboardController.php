@@ -13,6 +13,7 @@ class DashboardController extends Controller
 {
     public function index()
     {
+        // Get summary statistics
         $clientCount = Client::count();
         $projectCount = Project::count();
         $workCount = Work::count();
@@ -21,40 +22,24 @@ class DashboardController extends Controller
         $moneyPending = Work::sum('price') - Payment::sum('amount');
         $totalEarnings = Work::sum('price');
 
+        $recentWorks = Work::with('project.client')->latest()->take(5)->get()->map(function ($work) {
+            return [
+                'id' => $work->id,
+                'client' => $work->project->client->name,
+                'project' => $work->project->title,
+                'logo' => $work->project->logo,
+                'title' => $work->description,
+                'price' => $work->price,
+                'paid' => $work->getReceivedAmount(),
+                'startDate' => $work->start_date,
+                'endDate' => $work->end_date,
+                'status' => $work->status,
 
 
-        // Work status counts
-        $workStats = [
-            'total' => Work::count(),
-            'completed' => Work::where('status', 'completed')->count(),
-            'ongoing' => Work::where('status', 'ongoing')->count(),
-            'cancelled' => Work::where('status', 'cancelled')->count(),
-        ];
+            ];
+        });
 
-        // Payment status counts
-        $paymentStats = [
-            'paid' => 0,
-            'pending' => 0,
-            'refunded' => 0,
-            'cancelled' => 0,
-        ];
-
-        // Recent projects
-        $recentProjects = Project::with('client')->latest()->take(5)->get();
-
-        // Upcoming and overdue works
-        $today = Carbon::today();
-        $upcomingWorks = Work::with('project.client')
-            ->where('end_date', '>=', $today)
-            ->orderBy('end_date')
-            ->take(5)
-            ->get();
-
-        $overdueWorks = Work::with('project.client')
-            ->where('end_date', '<', $today)
-            ->orderBy('end_date')
-            ->take(5)
-            ->get();
+       
 
         return Inertia::render('Dashboard', [
             'summary' => [
@@ -65,17 +50,15 @@ class DashboardController extends Controller
                 'moneyPending' => $moneyPending,
                 'totalEarnings' => $totalEarnings,
             ],
-            'workStats' => $workStats,
-            'paymentStats' => $paymentStats,
+
             'chartData' => [
                 'monthly' => $this->getChartData('monthly', 12),
                 'weekly' => $this->getChartData('weekly', 12),
                 'daily' => $this->getChartData('daily', 30),
                 'alltime' => $this->getChartData('alltime'),
             ],
-            'recentProjects' => $recentProjects,
-            'upcomingWorks' => $upcomingWorks,
-            'overdueWorks' => $overdueWorks,
+
+            'recentWorks' => $recentWorks,
         ]);
     }
 

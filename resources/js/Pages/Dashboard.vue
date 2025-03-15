@@ -2,8 +2,7 @@
 import AppLayout from "@/Layouts/AppLayout.vue";
 import Cards from "@/Components/Dashboard/Cards.vue";
 import Chart from "@/Components/Dashboard/Chart.vue";
-import WorkStatus from "@/Components/Dashboard/WorkStatus.vue";
-import Deadlines from "@/Components/Dashboard/Deadlines.vue";
+import RecentWorks from "@/Components/Dashboard/RecentWorks.vue";
 
 defineOptions({
     layout: AppLayout,
@@ -11,18 +10,14 @@ defineOptions({
 
 const props = defineProps({
     summary: Object,
-    workStats: Object,
-    paymentStats: Object,
     chartData: Object,
-    recentProjects: Array,
-    upcomingWorks: Array,
-    overdueWorks: Array,
+    recentWorks: Array,
+
 });
 </script>
 
 <template>
     <div class="max-w-7xl mx-auto py-8 md:px-0 px-4">
-        
         <!-- Summary Cards -->
         <Cards :summary="summary" />
 
@@ -30,19 +25,10 @@ const props = defineProps({
         <Chart :chartData="chartData" />
 
         <!-- Work Stats & Recent Projects -->
-        <WorkStatus
-            :workStats="workStats"
-            :paymentStats="paymentStats"
-            :recentProjects="recentProjects"
-        />
-
-        <!-- Combined Work Deadlines Calendar -->
-        <Deadlines
-            :upcomingWorks="upcomingWorks"
-            :overdueWorks="overdueWorks"
+        <RecentWorks
+            :recentWorks="recentWorks"
         />
     </div>
 </template>
 
-<style scoped>
-</style>
+<style scoped></style>
