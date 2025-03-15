@@ -14,7 +14,16 @@ class ClientController extends Controller
         })
             ->orderBy('created_at', 'desc')
             ->paginate(9)
-            ->withQueryString();
+            ->withQueryString()
+            ->through(function ($client) {
+                return [
+                    ...$client->toArray(),
+                    'total_projects' => $client->getTotalProjects(),
+                    'total_revenue' => $client->getTotalRevenue(),
+                    'pending_amount' => $client->getPendingAmounts(),
+                ];
+            });
+            ;
 
         $totalClients = Client::count();
 
@@ -27,42 +36,40 @@ class ClientController extends Controller
         ]);
     }
 
-    // ClientController.php (add this method)
     public function show(Client $client)
     {
-        // Load all necessary relations for the client details page
+        // First load the relationships
         $client->load([
             'projects' => function ($query) {
-                $query->withCount('works');
+                $query->withCount('works')->orderBy('created_at', 'desc');
             },
             'projects.works' => function ($query) {
                 $query->orderBy('created_at', 'desc');
-            }
+            },
+            'projects.works.payments' => function ($query) {
+                $query->orderBy('created_at', 'desc');
+            },
         ]);
 
-        // Calculate additional metrics
-        $totalPaidWorks = 0;
-        $totalPendingWorks = 0;
-        $totalPaidRevenue = 0;
-        $totalPendingRevenue = 0;
+        $client->projects = $client->projects->map(function ($project) {
+            // First add total_revenue to the project
+            $project->total_revenue = $project->getTotalRevenue();
 
-        foreach ($client->projects as $project) {
-            foreach ($project->works as $work) {
-                if ($work->payment_status === 'paid') {
-                    $totalPaidWorks++;
-                    $totalPaidRevenue += $work->price;
-                } else if ($work->payment_status === 'pending') {
-                    $totalPendingWorks++;
-                    $totalPendingRevenue += $work->price;
-                }
-            }
-        }
+            // Then add remaining_amount to each work
+            $project->works = $project->works->map(function ($work) {
+                $work->remaining_amount = $work->getRemainingAmount();
+                return $work;
+            });
+
+            return $project;
+        });
+
 
         $metrics = [
-            'totalPaidWorks' => $totalPaidWorks,
-            'totalPendingWorks' => $totalPendingWorks,
-            'totalPaidRevenue' => $totalPaidRevenue,
-            'totalPendingRevenue' => $totalPendingRevenue
+            'totalProjects' => $client->getTotalProjects(),
+            'totalWorks' => $client->getTotalWorks(),
+            'totalRevenue' => $client->getTotalRevenue(),
+            'pendingAmount' => $client->getPendingAmounts(),
         ];
 
         return inertia('Clients/Show', [

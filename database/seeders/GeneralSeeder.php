@@ -47,14 +47,6 @@ class GeneralSeeder extends Seeder
                 'updated_at' => '2025-03-14 00:44:41',
             ],
             [
-                'id' => 5,
-                'name' => '2 Girls from Sahim',
-                'contact' => '+966',
-                'source' => 'Recommendation',
-                'created_at' => '2025-03-14 00:45:14',
-                'updated_at' => '2025-03-14 00:45:14',
-            ],
-            [
                 'id' => 6,
                 'name' => 'X girl',
                 'contact' => '+996',

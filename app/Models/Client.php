@@ -17,7 +17,7 @@ class Client extends Model
     {
         return $this->hasMany(Project::class);
     }
-    
+
     public function getTotalProjects()
     {
         return $this->projects()->count();
@@ -25,21 +25,38 @@ class Client extends Model
 
     public function getTotalWorks()
     {
-        return $this->projects()->works()->count();
+        return Work::whereHas('project', function ($query) {
+            $query->where('client_id', $this->id);
+        })->count();
     }
 
     public function getTotalPayments()
     {
-        return $this->projects()->works()->payments()->count();
+        return Payment::whereHas('work.project', function ($query) {
+            $query->where('client_id', $this->id);
+        })->count();
     }
 
     public function getTotalRevenue()
     {
-        return $this->projects()->works()->payments()->sum('amount');
+        return Payment::whereHas('work.project', function ($query) {
+            $query->where('client_id', $this->id);
+        })->sum('amount');
     }
 
-    // public function getPendingAmounts(){
-    //     // TODO
-    // }
+    public function getPendingAmounts()
+    {
+        // Get total value of all works for this client
+        $totalWorkValue = Work::whereHas('project', function ($query) {
+            $query->where('client_id', $this->id);
+        })->sum('price');
 
+        // Get total payments received
+        $totalPayments = Payment::whereHas('work.project', function ($query) {
+            $query->where('client_id', $this->id);
+        })->sum('amount');
+
+        // Return the difference
+        return $totalWorkValue - $totalPayments;
+    }
 }

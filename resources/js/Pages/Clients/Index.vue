@@ -29,12 +29,7 @@ function showClientDetails(client) {
 
 const isMobile = computed(() => window.innerWidth <= 768);
 
-const sources = ref([
-    "Upwork",
-    "Recommendation",
-    "Baaeed",
-    "Other",
-]);
+const sources = ref(["Upwork", "Recommendation", "Baaeed", "Other"]);
 
 // ######################################## search clients
 const search = ref(props.searchTerm);
@@ -412,65 +407,21 @@ const deleteClient = (clientId) => {
                                 v-if="client.contact"
                                 class="text-sm text-gray-500 mt-1"
                             >
-                                {{ client.contact }}
+                                Contact:
+                                <span class="text-sm text-rose-800 mt-1">{{
+                                    client.contact
+                                }}</span>
                             </p>
                             <p
                                 v-if="client.source"
-                                class="text-sm text-rose-600 mt-1"
+                                class="text-sm text-gray-500 mt-1"
                             >
-                                Source: {{ client.source }}
+                                Source:
+                                <span class="text-sm text-rose-800 mt-1">{{
+                                    client.source
+                                }}</span>
                             </p>
                         </div>
-                        <div
-                            class="h-12 w-12 flex items-center justify-center rounded-full bg-rose-50 text-rose-600"
-                        >
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                class="h-6 w-6"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-                                />
-                            </svg>
-                        </div>
-                    </div>
-
-                    <div class="mt-6 space-y-3">
-                        <div class="flex items-center justify-between">
-                            <span class="text-sm text-gray-500">Projects</span>
-                            <span class="text-lg font-medium text-gray-800">{{
-                                client.projects_count || 0
-                            }}</span>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <span class="text-sm text-gray-500"
-                                >Total Revenue</span
-                            >
-                            <span class="text-lg font-medium text-emerald-600"
-                                >${{
-                                    Number(
-                                        client.total_revenue || 0
-                                    ).toLocaleString()
-                                }}</span
-                            >
-                        </div>
-                    </div>
-
-                    <div
-                        class="mt-5 pt-5 border-t border-gray-100 flex justify-between items-center"
-                    >
-                        <button
-                            @click="showClientDetails(client)"
-                            class="text-sm text-rose-600 hover:text-rose-700 font-medium"
-                        >
-                            View Details
-                        </button>
                         <div class="flex space-x-3">
                             <button
                                 @click="showEditClientDetails(client)"
@@ -511,6 +462,44 @@ const deleteClient = (clientId) => {
                                 </svg>
                             </button>
                         </div>
+                    </div>
+
+                    <div class="mt-6 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-gray-500">Projects</span>
+                            <span class="text-lg font-medium text-gray-800">{{
+                                client.total_projects || 0
+                            }}</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <p class="text-sm text-gray-500">Total Revenue</p>
+                            <p class="flex flex-col items-end">
+                               <span class="font-medium text-emerald-600">${{
+                                    Number(
+                                        client.total_revenue || 0
+                                    ).toLocaleString()
+                                }}</span>
+                               <span v-if="client.pending_amount > 0" class="text-sm text-blue-500 font-medium">
+                                (${{
+                                    Number(
+                                        client.pending_amount || 0
+                                    ).toLocaleString()
+                                }}
+                                pending)
+                               </span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <div
+                        class="mt-5 pt-5 border-t border-gray-100 flex justify-center items-center"
+                    >
+                        <button
+                            @click="showClientDetails(client)"
+                            class="text-sm text-rose-600 hover:text-rose-700 font-medium"
+                        >
+                            View Details
+                        </button>
                     </div>
                 </div>
             </div>

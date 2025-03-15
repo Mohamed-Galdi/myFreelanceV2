@@ -50,5 +50,4 @@ class Work extends Model
     {
         return $this->getReceivedAmount() / $this->price * 100;
     }
-
 }

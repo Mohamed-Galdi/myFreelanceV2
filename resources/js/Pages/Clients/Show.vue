@@ -9,6 +9,7 @@ import { useToast } from "primevue/usetoast";
 import Toast from "primevue/toast";
 import ConfirmDialog from "primevue/confirmdialog";
 import { useConfirm } from "primevue/useconfirm";
+import WorkStatus from "@/Components/WorkStatus.vue";
 
 const props = defineProps({
     client: Object,
@@ -22,50 +23,13 @@ defineOptions({
 const toast = useToast();
 const confirm = useConfirm();
 
-
 const client = props.client;
 
 const activeTab = ref("projects");
 
 const isMobile = computed(() => window.innerWidth <= 768);
 
-const sources = ref([
-    "Upwork",
-    "Recommendation",
-    "Baaeed",
-    "Other",
-]);
-
-const projectStatuses = computed(() => {
-    const statuses = {
-        ongoing: 0,
-        completed: 0,
-        cancelled: 0,
-    };
-
-    props.client.projects.forEach((project) => {
-        const ongoingWorks = project.works.filter(
-            (work) => work.project_status === "ongoing"
-        ).length;
-        const completedWorks = project.works.filter(
-            (work) => work.project_status === "completed"
-        ).length;
-        const cancelledWorks = project.works.filter(
-            (work) => work.project_status === "cancelled"
-        ).length;
-
-        // Determine project status based on its works
-        if (cancelledWorks === project.works.length) {
-            statuses.cancelled++;
-        } else if (ongoingWorks > 0) {
-            statuses.ongoing++;
-        } else if (completedWorks === project.works.length) {
-            statuses.completed++;
-        }
-    });
-
-    return statuses;
-});
+const sources = ref(["Upwork", "Recommendation", "Baaeed", "Other"]);
 
 // Format currency
 const formatCurrency = (value) => {
@@ -86,6 +50,40 @@ const formatDate = (dateString) => {
     }).format(date);
 };
 
+function totalDuration(startDate, endDate) {
+    if (!startDate || !endDate) return "N/A";
+    if (startDate === endDate) return "1 day";
+
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+
+    let years = end.getFullYear() - start.getFullYear();
+    let months = end.getMonth() - start.getMonth();
+    let days = end.getDate() - start.getDate();
+
+    // Adjust for negative days (if end day is before start day)
+    if (days < 0) {
+        months--; // Reduce one month
+        let lastMonth = new Date(end.getFullYear(), end.getMonth(), 0); // Last day of the previous month
+        days += lastMonth.getDate();
+    }
+
+    // Adjust for negative months (if end month is before start month in the same year)
+    if (months < 0) {
+        years--;
+        months += 12;
+    }
+
+    // Formatting the result
+    let result = [];
+    if (years > 0) result.push(`${years} ${years === 1 ? "year" : "years"}`);
+    if (months > 0)
+        result.push(`${months} ${months === 1 ? "month" : "months"}`);
+    if (days > 0) result.push(`${days} ${days === 1 ? "day" : "days"}`);
+
+    return result.length > 0 ? result.join(" and ") : "0 days";
+}
+
 // ######################################## edit client
 const openEditClientDrawer = ref(false);
 
@@ -95,7 +93,6 @@ const editClientForm = useForm({
     contact: client.contact,
     source: client.source,
 });
-
 
 function updateClient() {
     editClientForm.post(
@@ -152,7 +149,7 @@ function deleteClient() {
             }, 500);
         },
     });
-};
+}
 </script>
 
 <template>
@@ -206,7 +203,7 @@ function deleteClient() {
             </form>
         </Drawer>
 
-         <!-- Confirm Dialog -->
+        <!-- Confirm Dialog -->
         <ConfirmDialog group="templating" class="w-full md:w-1/2 lg:w-1/3 mx-8">
             <template #message="slotProps">
                 <div class="flex flex-col items-center justify-center w-full">
@@ -325,228 +322,45 @@ function deleteClient() {
         </div>
 
         <!-- Stats cards -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <div
-                class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100"
+                class="bg-white shadow-md rounded-2xl p-5 flex flex-col items-center text-center border border-gray-200"
             >
-                <div class="p-5">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0 bg-rose-50 rounded-full p-3">
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                class="h-6 w-6 text-rose-500"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
-                                />
-                            </svg>
-                        </div>
-                        <div class="ml-5 w-0 flex-1">
-                            <dt
-                                class="text-sm font-medium text-gray-500 truncate"
-                            >
-                                Total Projects
-                            </dt>
-                            <dd class="flex items-baseline">
-                                <div
-                                    class="text-2xl font-semibold text-gray-900"
-                                >
-                                    {{ client.projects.length }}
-                                </div>
-                            </dd>
-                        </div>
-                    </div>
-                </div>
+                <i class="pi pi-desktop text-4xl text-amber-500 mb-3"></i>
+                <h3 class="text-lg font-semibold text-gray-700">Projects</h3>
+                <p class="text-2xl font-bold text-gray-900">
+                    {{ metrics.totalProjects }}
+                </p>
             </div>
 
             <div
-                class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100"
+                class="bg-white shadow-md rounded-2xl p-5 flex flex-col items-center text-center border border-gray-200"
             >
-                <div class="p-5">
-                    <div class="flex items-center">
-                        <div
-                            class="flex-shrink-0 bg-emerald-50 rounded-full p-3"
-                        >
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                class="h-6 w-6 text-emerald-500"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                                />
-                            </svg>
-                        </div>
-                        <div class="ml-5 w-0 flex-1">
-                            <dt
-                                class="text-sm font-medium text-gray-500 truncate"
-                            >
-                                Total Revenue
-                            </dt>
-                            <dd class="flex items-baseline">
-                                <div
-                                    class="text-2xl font-semibold text-gray-900"
-                                >
-                                    {{ formatCurrency(client.total_revenue) }}
-                                </div>
-                            </dd>
-                        </div>
-                    </div>
-                </div>
+                <i class="pi pi-file text-4xl text-blue-500 mb-3"></i>
+                <h3 class="text-lg font-semibold text-gray-700">Works</h3>
+                <p class="text-2xl font-bold text-gray-900">
+                    {{ metrics.totalWorks }}
+                </p>
             </div>
 
             <div
-                class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100"
+                class="bg-white shadow-md rounded-2xl p-5 flex flex-col items-center text-center border border-gray-200"
             >
-                <div class="p-5">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0 bg-blue-50 rounded-full p-3">
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                class="h-6 w-6 text-blue-500"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"
-                                />
-                            </svg>
-                        </div>
-                        <div class="ml-5 w-0 flex-1">
-                            <dt
-                                class="text-sm font-medium text-gray-500 truncate"
-                            >
-                                Paid Works
-                            </dt>
-                            <dd class="flex items-baseline">
-                                <div
-                                    class="text-2xl font-semibold text-gray-900"
-                                >
-                                    {{ metrics.totalPaidWorks }}
-                                </div>
-                                <div
-                                    class="ml-2 text-sm font-medium text-emerald-600"
-                                >
-                                    {{
-                                        formatCurrency(metrics.totalPaidRevenue)
-                                    }}
-                                </div>
-                            </dd>
-                        </div>
-                    </div>
-                </div>
+                <i class="pi pi-wallet text-4xl text-green-500 mb-3"></i>
+                <h3 class="text-lg font-semibold text-gray-700">Payments</h3>
+                <p class="text-2xl font-bold text-gray-900">
+                    {{ formatCurrency(metrics.totalRevenue) }}
+                </p>
             </div>
 
             <div
-                class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100"
+                class="bg-white shadow-md rounded-2xl p-5 flex flex-col items-center text-center border border-gray-200"
             >
-                <div class="p-5">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0 bg-amber-50 rounded-full p-3">
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                class="h-6 w-6 text-amber-500"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                                />
-                            </svg>
-                        </div>
-                        <div class="ml-5 w-0 flex-1">
-                            <dt
-                                class="text-sm font-medium text-gray-500 truncate"
-                            >
-                                Pending Works
-                            </dt>
-                            <dd class="flex items-baseline">
-                                <div
-                                    class="text-2xl font-semibold text-gray-900"
-                                >
-                                    {{ metrics.totalPendingWorks }}
-                                </div>
-                                <div
-                                    class="ml-2 text-sm font-medium text-amber-600"
-                                >
-                                    {{
-                                        formatCurrency(
-                                            metrics.totalPendingRevenue
-                                        )
-                                    }}
-                                </div>
-                            </dd>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Project Status Cards -->
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-            <div
-                class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100"
-            >
-                <div class="px-5 py-4 bg-blue-50">
-                    <h3 class="text-blue-700 text-lg font-medium">Ongoing</h3>
-                </div>
-                <div class="px-5 py-5">
-                    <div class="text-3xl font-bold text-gray-800">
-                        {{ projectStatuses.ongoing }}
-                    </div>
-                    <div class="text-sm text-gray-500">
-                        projects in progress
-                    </div>
-                </div>
-            </div>
-
-            <div
-                class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100"
-            >
-                <div class="px-5 py-4 bg-emerald-50">
-                    <h3 class="text-emerald-700 text-lg font-medium">
-                        Completed
-                    </h3>
-                </div>
-                <div class="px-5 py-5">
-                    <div class="text-3xl font-bold text-gray-800">
-                        {{ projectStatuses.completed }}
-                    </div>
-                    <div class="text-sm text-gray-500">projects completed</div>
-                </div>
-            </div>
-
-            <div
-                class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100"
-            >
-                <div class="px-5 py-4 bg-red-50">
-                    <h3 class="text-red-700 text-lg font-medium">Cancelled</h3>
-                </div>
-                <div class="px-5 py-5">
-                    <div class="text-3xl font-bold text-gray-800">
-                        {{ projectStatuses.cancelled }}
-                    </div>
-                    <div class="text-sm text-gray-500">projects cancelled</div>
-                </div>
+                <i class="pi pi-clock text-4xl text-yellow-500 mb-3"></i>
+                <h3 class="text-lg font-semibold text-gray-700">Pending</h3>
+                <p class="text-2xl font-bold text-gray-900">
+                    {{ formatCurrency(metrics.pendingAmount) }}
+                </p>
             </div>
         </div>
 
@@ -575,6 +389,17 @@ function deleteClient() {
                 >
                     Recent Works
                 </button>
+                <button
+                    @click="activeTab = 'payments'"
+                    :class="[
+                        'py-4 px-1 text-center border-b-2 font-medium text-sm',
+                        activeTab === 'payments'
+                            ? 'border-rose-500 text-rose-600'
+                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
+                    ]"
+                >
+                    Payments
+                </button>
             </nav>
         </div>
 
@@ -600,16 +425,6 @@ function deleteClient() {
                 <h3 class="mt-2 text-sm font-medium text-gray-900">
                     No projects yet
                 </h3>
-                <p class="mt-1 text-sm text-gray-500">
-                    Get started by creating a new project for this client.
-                </p>
-                <div class="mt-6">
-                    <button
-                        class="px-4 py-2 bg-rose-500 text-white rounded-lg hover:bg-rose-600 transition duration-150"
-                    >
-                        New Project
-                    </button>
-                </div>
             </div>
 
             <div
@@ -789,34 +604,14 @@ function deleteClient() {
                             >
                                 <div class="flex items-start justify-between">
                                     <div class="min-w-0 flex-1">
-                                        <div class="flex items-center mb-1">
-                                            <p
-                                                class="text-sm font-medium text-rose-600 truncate"
-                                            >
-                                                {{ project.title }}
-                                            </p>
-                                            <span class="mx-2 text-gray-300"
-                                                >•</span
-                                            >
-                                            <span
-                                                :class="[
-                                                    'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
-                                                    work.project_status ===
-                                                    'ongoing'
-                                                        ? 'bg-blue-100 text-blue-800'
-                                                        : work.project_status ===
-                                                          'completed'
-                                                        ? 'bg-green-100 text-green-800'
-                                                        : 'bg-red-100 text-red-800',
-                                                ]"
-                                            >
-                                                {{ work.project_status }}
-                                            </span>
-                                        </div>
+                                        <p
+                                            class="text-sm font-medium text-rose-600 truncate"
+                                        >
+                                            {{ project.title }}
+                                        </p>
                                         <p class="text-sm text-gray-900">
                                             {{ work.description }}
                                         </p>
-
                                         <div
                                             class="mt-2 flex items-center text-sm text-gray-500"
                                         >
@@ -839,6 +634,21 @@ function deleteClient() {
                                                 }}
                                             </span>
                                         </div>
+                                        <div>
+                                            <span
+                                                class="text-sm text-gray-500 me-1"
+                                                >Duration:</span
+                                            >
+                                            <span
+                                                class="text-sm text-gray-800"
+                                                >{{
+                                                    totalDuration(
+                                                        work.start_date,
+                                                        work.end_date
+                                                    )
+                                                }}</span
+                                            >
+                                        </div>
                                     </div>
                                     <div
                                         class="flex-shrink-0 ml-4 flex flex-col items-end"
@@ -848,39 +658,136 @@ function deleteClient() {
                                         >
                                             {{ formatCurrency(work.price) }}
                                         </p>
-                                        <span
-                                            :class="[
-                                                'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium mt-1',
-                                                work.payment_status === 'paid'
-                                                    ? 'bg-green-100 text-green-800'
-                                                    : work.payment_status ===
-                                                      'pending'
-                                                    ? 'bg-amber-100 text-amber-800'
-                                                    : work.payment_status ===
-                                                      'refunded'
-                                                    ? 'bg-blue-100 text-blue-800'
-                                                    : 'bg-red-100 text-red-800',
-                                            ]"
-                                        >
-                                            {{ work.payment_status }}
-                                        </span>
                                         <p
-                                            v-if="work.payment_method"
-                                            class="mt-1 text-xs text-gray-500"
+                                            v-if="work.remaining_amount > 0"
+                                            class="text-orange-500 text-sm"
                                         >
-                                            via
+                                            remaining:
                                             {{
-                                                work.payment_method.replace(
-                                                    "_",
-                                                    " "
+                                                formatCurrency(
+                                                    work.remaining_amount
                                                 )
                                             }}
+                                        </p>
+                                        <p
+                                            v-else
+                                            class="text-green-700 text-sm font-medium"
+                                        >
+                                            paid
                                         </p>
                                     </div>
                                 </div>
                             </div>
                         </li>
                     </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab content - Payments -->
+        <div v-if="activeTab === 'payments'">
+            <div v-if="client.projects.length === 0" class="text-center py-8">
+                <div class="mx-auto h-12 w-12 text-gray-400">
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 640 512"
+                        class="text-[#9da3af]"
+                    >
+                        <path class="fill-current"
+                            d="M535 41c-9.4-9.4-9.4-24.6 0-33.9s24.6-9.4 33.9 0l64 64c4.5 4.5 7 10.6 7 17s-2.5 12.5-7 17l-64 64c-9.4 9.4-24.6 9.4-33.9 0s-9.4-24.6 0-33.9l23-23L384 112c-13.3 0-24-10.7-24-24s10.7-24 24-24l174.1 0L535 41zM105 377l-23 23L256 400c13.3 0 24 10.7 24 24s-10.7 24-24 24L81.9 448l23 23c9.4 9.4 9.4 24.6 0 33.9s-24.6 9.4-33.9 0L7 441c-4.5-4.5-7-10.6-7-17s2.5-12.5 7-17l64-64c9.4-9.4 24.6-9.4 33.9 0s9.4 24.6 0 33.9zM96 64l241.9 0c-3.7 7.2-5.9 15.3-5.9 24c0 28.7 23.3 52 52 52l117.4 0c-4 17 .6 35.5 13.8 48.8c20.3 20.3 53.2 20.3 73.5 0L608 169.5 608 384c0 35.3-28.7 64-64 64l-241.9 0c3.7-7.2 5.9-15.3 5.9-24c0-28.7-23.3-52-52-52l-117.4 0c4-17-.6-35.5-13.8-48.8c-20.3-20.3-53.2-20.3-73.5 0L32 342.5 32 128c0-35.3 28.7-64 64-64zm64 64l-64 0 0 64c35.3 0 64-28.7 64-64zM544 320c-35.3 0-64 28.7-64 64l64 0 0-64zM320 352a96 96 0 1 0 0-192 96 96 0 1 0 0 192z"
+                        />
+                    </svg>
+                </div>
+                <h3 class="mt-2 text-sm font-medium text-gray-900">
+                    No payments yet
+                </h3>
+                <p class="mt-1 text-sm text-gray-500">
+                    Get started by creating a new project for this client.
+                </p>
+            </div>
+            <div v-else>
+                <div v-for="project in client.projects" :key="project.id">
+                    <h2 class="text-xl font-bold text-blue-900 mt-8">
+                        {{ project.title }}
+                    </h2>
+
+                    <div
+                        v-for="work in project.works"
+                        :key="work.id"
+                        class="mt-3 p-4 bg-blue-50 rounded-lg shadow-md border border-blue-200"
+                    >
+                        <h3 class="text-lg font-semibold text-gray-800">
+                            {{ work.description }}
+                        </h3>
+                        <p class="text-gray-600">
+                            Total Price:
+                            <span class="font-bold text-blue-600"
+                                >$ {{ work.price }}</span
+                            >
+                        </p>
+                        <p class="text-gray-600">
+                            Status:
+                            <span
+                                :class="
+                                    work.status === 'Completed'
+                                        ? 'text-green-600'
+                                        : 'text-yellow-600'
+                                "
+                            >
+                                {{ work.status }}
+                            </span>
+                        </p>
+
+                        <div class="mt-3 space-y-3">
+                            <div
+                                v-for="payment in work.payments"
+                                :key="payment.id"
+                                class="p-4 bg-white rounded-lg shadow hover:shadow-md transition-all border border-gray-200"
+                            >
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-3">
+                                        <i
+                                            class="pi pi-wallet text-blue-500 text-lg"
+                                        ></i>
+                                        <div>
+                                            <p
+                                                class="text-gray-800 font-medium"
+                                            >
+                                                Amount:
+                                                <span
+                                                    class="text-blue-700 font-bold"
+                                                    >$
+                                                    {{ payment.amount }}</span
+                                                >
+                                            </p>
+                                            <p class="text-sm text-gray-500">
+                                                Date:
+                                                {{
+                                                    formatDate(
+                                                        payment.payment_date
+                                                    )
+                                                }}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="text-sm text-gray-500">
+                                            Method:
+                                            <span class="font-semibold">{{
+                                                payment.payment_method
+                                            }}</span>
+                                        </p>
+                                        <p
+                                            v-if="payment.note"
+                                            class="text-xs text-gray-600 italic"
+                                        >
+                                            Note: "{{ payment.note }}"
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
