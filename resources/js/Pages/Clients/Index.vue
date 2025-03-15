@@ -395,7 +395,7 @@ const deleteClient = (clientId) => {
             <div
                 v-for="client in clients.data"
                 :key="client.id"
-                class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100 hover:shadow-md transition duration-200"
+                class="bg-slate-50 rounded-xl shadow-sm overflow-hidden border border-gray-100 hover:shadow-md transition duration-200"
             >
                 <div class="p-6">
                     <div class="flex justify-between items-start">

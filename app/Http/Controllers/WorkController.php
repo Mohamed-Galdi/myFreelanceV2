@@ -15,19 +15,21 @@ class WorkController extends Controller
         $works = Work::with(['project.client', 'payments']) // Include payments
             ->orderBy('created_at', 'desc')
             ->paginate(9)
-            ->withQueryString();
+            ->withQueryString()
+            ->through(function ($work) {
+                return [
+                    ...$work->toArray(),
+                    'paid' => $work->getReceivedAmount(),
+                ];
+            });
 
         $projects = Project::select('id', 'title')->get()->toArray();
 
         $totalWorks = Work::count();
-        $totalRevenue = Work::sum('price');
-        $pendingRevenue = Work::sum('price');
 
         return inertia('Works/Index', [
             'works' => $works,
             'totalWorks' => $totalWorks,
-            'totalRevenue' => $totalRevenue,
-            'pendingRevenue' => $pendingRevenue,
             'projects' => $projects
         ]);
     }
@@ -35,11 +37,20 @@ class WorkController extends Controller
 
     public function show(Work $work)
     {
-        $work->load('project.client');
+        $work->load('project.client', 'payments');
+
+        $work->paid = $work->getReceivedAmount();
 
         $projects = Project::select('id', 'title')->get()->toArray();
 
-        $worksOfSameProject = Work::with(['project.client', 'payments'])->where('project_id', $work->project_id)->whereNot('id', $work->id)->get();
+        $worksOfSameProject = Work::where('project_id', $work->project_id)
+            ->where('id', '!=', $work->id)
+            ->get() // Fetch results first
+            ->map(function ($work) {
+                return array_merge($work->toArray(), [
+                    'paid' => $work->getReceivedAmount(),
+                ]);
+            });
 
         return inertia('Works/Show', [
             'work' => $work,

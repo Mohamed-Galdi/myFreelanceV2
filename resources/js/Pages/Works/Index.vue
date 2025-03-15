@@ -16,8 +16,6 @@ import WorkStatus from "@/Components/WorkStatus.vue";
 const props = defineProps({
     works: Object,
     totalWorks: Number,
-    totalRevenue: String,
-    pendingRevenue: String,
     projects: Array,
 });
 
@@ -38,6 +36,18 @@ const formatCurrency = (value) => {
         style: "currency",
         currency: "USD",
     }).format(value || 0);
+};
+
+const getPaymentPercentage = (work) => {
+    return ((parseFloat(work.paid) / parseFloat(work.price)) * 100).toFixed(0);
+};
+
+const getProgressBarColor = (percentage) => {
+    const percent = parseInt(percentage);
+    if (percent < 25) return "bg-red-500";
+    if (percent < 50) return "bg-yellow-500";
+    if (percent < 75) return "bg-blue-500";
+    return "bg-green-500";
 };
 
 // Format date
@@ -468,7 +478,7 @@ const deleteWork = (workId) => {
             <div
                 v-for="work in works.data"
                 :key="work.id"
-                class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100 hover:shadow-md transition duration-200"
+                class="bg-slate-100 rounded-xl shadow-sm overflow-hidden border border-gray-100 hover:shadow-md transition duration-200"
             >
                 <div class="p-5">
                     <div class="flex items-start justify-between mb-3">
@@ -483,38 +493,36 @@ const deleteWork = (workId) => {
                     </div>
 
                     <p
-                        class="text-sm text-gray-600 line-clamp-2 my-5 border border-slate-200 rounded-md p-1 shadow-sm"
+                        class="text-sm bg-white text-gray-600 line-clamp-2 my-5 border border-slate-200 rounded-md p-1 shadow-sm"
                     >
                         {{ work.description }}
                     </p>
 
                     <div class="mb-4">
-                        <Link
-                            :href="route('project', work.project.id)"
-                            class="text-sm text-blue-600 hover:text-blue-700 font-medium"
-                        >
-                            {{ work.project.title }}
-                        </Link>
-                        <p class="text-xs text-gray-500 mt-1">
-                            Client: {{ work.project.client.name }}
+                       
+                        <p class="text-sm text-gray-500 mt-1">
+                            Client: <Link :href="route('client', work.project.client.id)" class="text-sm hover:text-blue-700 font-medium">{{ work.project.client.name }}</Link>
+                        </p>
+                        <p class="text-sm text-gray-500 mt-1">
+                            Project: <Link :href="route('project', work.project.id)" class="text-sm hover:text-blue-700 font-medium">{{ work.project.title }}</Link>
                         </p>
                     </div>
 
                     <div class="grid grid-cols-2 gap-4 mb-4">
-                        <div class="bg-gray-50 rounded-lg px-3 py-2">
+                        <div class="bg-white rounded-lg px-3 py-2">
                             <p class="text-xs text-gray-500">Start Date</p>
                             <p class="text-sm font-medium text-gray-800">
                                 {{ formatDate(work.start_date) }}
                             </p>
                         </div>
-                        <div class="bg-gray-50 rounded-lg px-3 py-2">
+                        <div class="bg-white rounded-lg px-3 py-2">
                             <p class="text-xs text-gray-500">End Date</p>
                             <p class="text-sm font-medium text-gray-800">
                                 {{ formatDate(work.end_date) }}
                             </p>
                         </div>
                         <div
-                            class="bg-gray-50 rounded-lg px-3 col-span-2 py-2 text-center"
+                            class="bg-white rounded-lg px-3 col-span-2 py-2 text-center"
                         >
                             <p class="text-xs text-gray-500">Total Duration</p>
                             <p
@@ -530,8 +538,55 @@ const deleteWork = (workId) => {
                         </div>
                     </div>
 
-                    <!-- Payment History -->
-                    <div>payments: TODO</div>
+                    <div class="bg-white rounded-xl p-4 flex flex-col">
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="text-gray-500 text-sm font-medium"
+                                >Payment</span
+                            >
+                            <div>
+                                <span class="font-bold text-gray-900"
+                                    >${{ work.paid }}</span
+                                >
+                                <span class="text-gray-400 text-sm">/</span>
+                                <span class="text-gray-600"
+                                    >${{ work.price }}</span
+                                >
+                            </div>
+                        </div>
+
+                        <div class="mb-1">
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div
+                                    class="h-2 rounded-full"
+                                    :class="
+                                        getProgressBarColor(
+                                            getPaymentPercentage(work)
+                                        )
+                                    "
+                                    :style="{
+                                        width: getPaymentPercentage(work) + '%',
+                                    }"
+                                ></div>
+                            </div>
+                        </div>
+
+                        <div
+                            class="text-right text-sm"
+                            :class="{
+                                'text-red-600': getPaymentPercentage(work) < 25,
+                                'text-yellow-600':
+                                    getPaymentPercentage(work) >= 25 &&
+                                    getPaymentPercentage(work) < 50,
+                                'text-blue-600':
+                                    getPaymentPercentage(work) >= 50 &&
+                                    getPaymentPercentage(work) < 75,
+                                'text-green-600':
+                                    getPaymentPercentage(work) >= 75,
+                            }"
+                        >
+                            {{ getPaymentPercentage(work) }}% Complete
+                        </div>
+                    </div>
 
                     <div
                         class="flex items-center justify-between pt-4 border-t border-gray-100"
